@@ -888,7 +888,7 @@
                 {
                   "group": "LangSmith API",
                   "openapi": {
-                    "source": "https://pr-23198-api.review.smith.langchain.com/openapi.json",
+                    "source": "https://smith.langchain.com/openapi.json",
                     "directory": "langsmith/smith-api"
                   }
                 },

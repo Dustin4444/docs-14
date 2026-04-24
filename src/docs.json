@@ -638,6 +638,7 @@
               "pages": [
                 "langsmith/deployment",
                 "langsmith/deployment-quickstart",
+                "langsmith/deployment-quickstart-da",
                 "langsmith/local-dev-testing",
                 {
                   "group": "Agent server",

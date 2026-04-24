@@ -150,7 +150,7 @@ console.log(version);
 pip install -U langchain-core langchain
 
 # Upgrade to a specific version
-pip install langchain-core==1.0.0
+pip install langchain-core=={{LANGCHAIN_CORE_PY_VERSION}}
 ```
 
 ```bash LangGraph
@@ -158,7 +158,7 @@ pip install langchain-core==1.0.0
 pip install -U langgraph
 
 # Upgrade to a specific version
-pip install langgraph==1.0.0
+pip install langgraph=={{LANGGRAPH_PY_VERSION}}
 ```
 
 ```bash Deep Agents
@@ -166,7 +166,7 @@ pip install langgraph==1.0.0
 pip install -U deepagents
 
 # Upgrade to a specific version
-pip install deepagents==0.1.0
+pip install deepagents=={{DEEPAGENTS_PY_VERSION}}
 ```
 </CodeGroup>
 :::
@@ -179,7 +179,7 @@ pip install deepagents==0.1.0
 npm update langchain @langchain/core
 
 # Install a specific version
-npm install langchain@1.0.0 @langchain/core@1.0.0
+npm install langchain@{{LANGCHAIN_JS_VERSION}} @langchain/core@{{LANGCHAIN_CORE_JS_VERSION}}
 ```
 
 ```bash LangGraph
@@ -187,7 +187,7 @@ npm install langchain@1.0.0 @langchain/core@1.0.0
 npm update @langchain/langgraph
 
 # Install a specific version
-npm install @langchain/langgraph@1.0.0
+npm install @langchain/langgraph@{{LANGGRAPH_JS_VERSION}}
 ```
 </CodeGroup>
 :::

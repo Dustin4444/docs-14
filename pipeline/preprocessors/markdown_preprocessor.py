@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 
 from pipeline.preprocessors.handle_auto_links import replace_autolinks
+from pipeline.preprocessors.package_versions import substitute_versions
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,9 @@ def preprocess_markdown(
 
     # Apply cross-reference preprocessing
     content = replace_autolinks(content, str(file_path), default_scope=default_scope)
+
+    # Substitute package version placeholders (e.g., {{LANGCHAIN_PY_VERSION}})
+    content = substitute_versions(content)
 
     # Apply conditional rendering for code blocks
     return _apply_conditional_rendering(content, target_language)

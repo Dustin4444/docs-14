@@ -157,6 +157,10 @@ Use `@[ClassName]` to auto-link to API docs. Defined in `pipeline/preprocessors/
 
 **Don't use for:** Repeated mentions, general concepts, or when a descriptive link is clearer
 
+### Package version placeholders
+
+Use tokens like `{{LANGCHAIN_PY_VERSION}}` in install/upgrade snippets to reference the latest published PyPI/npm version. The build pipeline substitutes these from `versions.yml`, which is kept in sync with registries by the `update-package-versions.yml` workflow (see `pipeline/preprocessors/package_versions.py` and `scripts/update_package_versions.py`).
+
 ## Assets
 
 **Images:** Store in `src/images/`. Use descriptive filenames and alt text.

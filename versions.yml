@@ -1,0 +1,64 @@
+# Source of truth for the latest published versions of LangChain OSS packages.
+#
+# Used by the docs build pipeline to substitute version placeholders (e.g.,
+# {{LANGCHAIN_PY_VERSION}}) in install/upgrade snippets so the docs always
+# reference the latest published PyPI/npm version.
+#
+# Do not edit by hand. This file is updated automatically by
+# `scripts/update_package_versions.py`, which is run on a schedule by the
+# `.github/workflows/update-package-versions.yml` workflow. The script
+# fetches the latest stable (non pre-release) version from PyPI/npm.
+#
+# Fields:
+# - name: Package name on the registry (PyPI name or npm name).
+# - registry: "pypi" or "npm".
+# - placeholder: Token used in MDX snippets (without the surrounding `{{ }}`).
+# - version: Latest published stable version. Updated by automation.
+# - updated_at: ISO 8601 timestamp of the last automated update.
+
+packages:
+- name: langchain
+  registry: pypi
+  placeholder: LANGCHAIN_PY_VERSION
+  version: 1.0.1
+  updated_at: null
+- name: langchain-core
+  registry: pypi
+  placeholder: LANGCHAIN_CORE_PY_VERSION
+  version: 1.0.0
+  updated_at: null
+- name: langgraph
+  registry: pypi
+  placeholder: LANGGRAPH_PY_VERSION
+  version: 1.0.0
+  updated_at: null
+- name: deepagents
+  registry: pypi
+  placeholder: DEEPAGENTS_PY_VERSION
+  version: 0.1.0
+  updated_at: null
+- name: langsmith
+  registry: pypi
+  placeholder: LANGSMITH_PY_VERSION
+  version: 0.1.133
+  updated_at: null
+- name: langchain
+  registry: npm
+  placeholder: LANGCHAIN_JS_VERSION
+  version: 1.0.0
+  updated_at: null
+- name: "@langchain/core"
+  registry: npm
+  placeholder: LANGCHAIN_CORE_JS_VERSION
+  version: 1.0.0
+  updated_at: null
+- name: "@langchain/langgraph"
+  registry: npm
+  placeholder: LANGGRAPH_JS_VERSION
+  version: 1.0.0
+  updated_at: null
+- name: langsmith
+  registry: npm
+  placeholder: LANGSMITH_JS_VERSION
+  version: 0.1.32
+  updated_at: null

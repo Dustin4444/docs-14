@@ -64,6 +64,10 @@ async def my_function():
 
 If an assistant requires synchronous blocking operations, set [`BG_JOB_ISOLATED_LOOPS`](/langsmith/env-var#bg_job_isolated_loops) to `True` to execute each run in a separate event loop.
 
+<Warning>
+Enabling `BG_JOB_ISOLATED_LOOPS` prevents health-check failures caused by a blocked serving loop, but the synchronous code continues to run on the background loop and will still degrade throughput, tail latency, and scaling under load. To actually resolve those issues, use native async drivers and async code throughout your agent, or wrap unavoidable sync calls in `asyncio.to_thread(...)`. See [`BG_JOB_ISOLATED_LOOPS`](/langsmith/env-var#bg_job_isolated_loops) for details.
+</Warning>
+
 #### Minimize redundant checkpointing
 
 Minimize redundant checkpointing by setting [`durability`](/oss/langgraph/durable-execution#durability-modes) to the minimum value necessary to ensure your data is durable.

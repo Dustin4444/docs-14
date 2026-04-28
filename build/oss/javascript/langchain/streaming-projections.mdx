@@ -1,0 +1,229 @@
+---
+title: Streaming
+description: Stream real-time updates from LangChain agent runs
+---
+
+LangChain agents are built on LangGraph, so they support the same streaming stack with agent-focused projections for messages, tool calls, state, and custom updates.
+
+For most application and frontend use cases, use **Event Streaming** through `stream_events(..., version="v3")`. Event Streaming returns a run object with typed projections, so you can choose the view you need instead of parsing stream-mode tuples.
+
+<Note>
+Interested in streaming Pregel modes such as `updates`, `messages`, or `custom` directly? See the [Pregel Streaming page](/oss/javascript/langchain/streaming).
+</Note>
+
+
+
+```ts
+import { createAgent, tool } from "langchain";
+import * as z from "zod";
+
+const getWeather = tool(
+  async ({ city }) => `It's always sunny in ${city}!`,
+  {
+    name: "get_weather",
+    description: "Get weather for a city.",
+    schema: z.object({ city: z.string() }),
+  }
+);
+
+const agent = createAgent({
+  model: "gpt-5-nano",
+  tools: [getWeather],
+});
+
+const run = await agent.streamEvents(
+  { messages: [{ role: "user", content: "What is the weather in SF?" }] },
+  { version: "v3" }
+);
+
+for await (const message of run.messages) {
+  for await (const delta of message.text) {
+    process.stdout.write(delta);
+  }
+}
+
+const finalState = await run.output;
+```
+
+
+## What you can stream
+
+| Projection | Use |
+| ---------- | --- |
+| `run.messages` | Model message streams, one per LLM call. |
+| `message.text` | Text deltas and final text for a message. |
+| `message.reasoning` | Reasoning deltas for models that expose reasoning content. |
+| `message.tool_calls` | Tool-call argument chunks and finalized tool calls. |
+| `run.tool_calls` | Tool execution lifecycle, inputs, output deltas, final output, and errors. |
+| `run.values` | Agent state snapshots. |
+| `run.output` | Final agent state. |
+| `run.extensions` | Custom transformer projections. |
+| `for event in run` | Raw protocol events when you need exact arrival order. |
+
+
+
+`run.messages` yields message streams. Each message stream exposes `.text`, `.reasoning`, `.toolCalls`, and `.output`. Async projections can be iterated for live deltas or awaited for final values.
+
+
+## Agent messages
+
+Use `run.messages` when you want model output from each LLM call.
+
+
+
+```ts
+const run = await agent.streamEvents(input, { version: "v3" });
+
+for await (const message of run.messages) {
+  process.stdout.write(`[${message.node}] `);
+  for await (const delta of message.text) {
+    process.stdout.write(delta);
+  }
+
+  const fullMessage = await message.output;
+  const usage = fullMessage.usage_metadata;
+}
+```
+
+
+## Reasoning content
+
+Reasoning content uses the same shape as text content, but it is available only when the selected model emits reasoning blocks.
+
+
+
+```ts
+const run = await agent.streamEvents(input, { version: "v3" });
+
+for await (const message of run.messages) {
+  for await (const delta of message.reasoning) {
+    process.stdout.write(`[thinking] ${delta}`);
+  }
+
+  for await (const delta of message.text) {
+    process.stdout.write(delta);
+  }
+}
+```
+
+
+See the [reasoning guide](/oss/javascript/langchain/models#reasoning) and your provider's integration page for model configuration details.
+
+## Tool calls
+
+There are two useful tool-call projections:
+
+- `message.tool_calls` streams tool-call argument chunks while the model is producing the tool call.
+- `run.tool_calls` streams the lifecycle of tool execution after the tool call starts.
+
+
+
+```ts
+const run = await agent.streamEvents(input, { version: "v3" });
+
+await Promise.all([
+  (async () => {
+    for await (const message of run.messages) {
+      for await (const chunk of message.toolCalls) {
+        console.log("tool call chunk", chunk);
+      }
+    }
+  })(),
+  (async () => {
+    for await (const call of run.toolCalls) {
+      console.log(call.name, call.input);
+      console.log(await call.output, await call.error);
+    }
+  })(),
+]);
+```
+
+
+## State and final output
+
+Use `run.values` for state snapshots and `run.output` for the final agent state.
+
+
+
+```ts
+const run = await agent.streamEvents(input, { version: "v3" });
+
+for await (const snapshot of run.values) {
+  console.log(snapshot);
+}
+
+const finalState = await run.output;
+```
+
+
+## Multiple projections
+
+
+
+Use concurrent consumers when you want multiple projections in JavaScript:
+
+```ts
+const run = await agent.streamEvents(input, { version: "v3" });
+
+await Promise.all([
+  (async () => {
+    for await (const message of run.messages) {
+      console.log(await message.text);
+    }
+  })(),
+  (async () => {
+    for await (const call of run.toolCalls) {
+      console.log(call.name, call.input);
+    }
+  })(),
+]);
+```
+
+
+If you need exact arrival order across message text, reasoning, tool-call chunks, and state updates, iterate raw protocol events:
+
+
+
+```ts
+for await (const event of run) {
+  console.log(event.method, event.params.namespace, event.params.data);
+}
+```
+
+
+## Custom updates
+
+Use custom stream transformers when your application needs a projection that is not built in, such as retrieval progress, artifacts, or domain-specific events.
+
+
+
+```ts
+const run = await agent.streamEvents(input, {
+  version: "v3",
+  transformers: [toolActivityTransformer],
+});
+
+for await (const activity of run.extensions.toolActivity) {
+  console.log(activity);
+}
+```
+
+
+See [Custom transformers](/oss/javascript/langgraph/streaming/custom-transformers) for the transformer contract.
+
+## Related
+
+- [Pregel Streaming](/oss/javascript/langchain/streaming) covers low-level Pregel stream modes.
+- [Custom transformers](/oss/javascript/langgraph/streaming/custom-transformers) covers application-specific projections.
+- [Frontend streaming patterns](/oss/javascript/langchain/frontend/overview) shows UI use cases built on streamed state.
+
+---
+
+<div className="source-links">
+<Callout icon="terminal-2">
+    [Connect these docs](/use-these-docs) to Claude, VSCode, and more via MCP for real-time answers.
+</Callout>
+<Callout icon="edit">
+    [Edit this page on GitHub](https://github.com/langchain-ai/docs/edit/main/src/oss/langchain/streaming-projections.mdx) or [file an issue](https://github.com/langchain-ai/docs/issues/new/choose).
+</Callout>
+</div>

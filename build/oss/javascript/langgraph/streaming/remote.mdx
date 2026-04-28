@@ -1,0 +1,127 @@
+---
+title: Remote
+description: Stream deployed graphs and agents with the LangGraph SDK.
+---
+
+Use the LangGraph SDK to stream graphs and agents that run behind a LangGraph API server.
+
+
+
+The recommended remote streaming entry point is `client.threads.stream(...)`.
+
+
+
+
+```ts
+import { Client } from "@langchain/langgraph-sdk";
+
+const client = new Client({ apiUrl: "http://localhost:2024" });
+
+const thread = client.threads.stream({
+  assistantId: "simple-tool-graph",
+});
+
+await thread.run.input({
+  input: {
+    messages: [{ role: "user", content: "What is 42 * 17?" }],
+  },
+});
+
+for await (const message of thread.messages) {
+  for await (const token of message.text) {
+    process.stdout.write(token);
+  }
+}
+
+console.log(await thread.output);
+await thread.close();
+```
+
+
+## Thread streams
+
+
+
+`client.threads.stream(...)` returns a `ThreadStream`. A thread stream is a remote handle that mirrors the in-process Event Streaming model:
+
+| Getter | Channel | Use |
+| ------ | ------- | --- |
+| `thread.messages` | `messages` | Stream message text, reasoning, usage, and blocks. |
+| `thread.values` | `values` | Stream state snapshots and await the final state. |
+| `thread.output` | `values` | Await final output. |
+| `thread.toolCalls` | `tools` | Observe tool call lifecycle and results. |
+| `thread.subgraphs` | `lifecycle` | Observe nested graph execution. |
+| `thread.subagents` | `lifecycle` and `tools` | Observe Deep Agents subagent work. |
+| `thread.extensions.<name>` | `custom:<name>` | Consume custom transformer projections. |
+
+The SDK opens subscriptions lazily. If a client only reads `thread.output`, it does not subscribe to token-level messages.
+
+
+## Submit work
+
+
+
+Use `thread.run.input(...)` to start a run or resume work on the bound thread:
+
+```ts
+await thread.run.input({
+  input: { messages: [{ role: "user", content: "hello" }] },
+  metadata: { source: "docs" },
+});
+```
+
+
+For human-in-the-loop flows, use `thread.input.respond(...)` after an interrupt. See the frontend and SDK interrupt guides for UI patterns.
+
+## Subscribe to raw protocol events
+
+Most applications should use Event Streaming through typed projections. Use raw subscriptions for debugging, advanced routing, or custom rendering:
+
+
+
+```ts
+const events = await thread.subscribe({
+  channels: ["messages", "tools", "values", "lifecycle"],
+  namespaces: [["researcher", "tools"]],
+  depth: 0,
+});
+
+for await (const event of events) {
+  console.log(event.method, event.params.namespace, event.params.data);
+}
+```
+
+
+Use `namespaces` and `depth` to subscribe to specific graph, subgraph, and task events. See [Namespaces](/oss/javascript/langgraph/streaming/namespaces) for matching rules and recipes.
+
+## Reconnect and replay
+
+Remote streams carry monotonic sequence numbers. The SDK tracks ordering, deduplicates replayed events, and replays buffered server events when a subscription reconnects.
+
+The important application-level rule is to keep a thread ID when you need to reattach:
+
+
+
+```ts
+const thread = client.threads.stream("thread-id", {
+  assistantId: "simple-tool-graph",
+});
+```
+
+
+## Run streaming APIs
+
+
+
+`client.runs.stream(...)`, `client.runs.joinStream(...)`, and `client.threads.joinStream(...)` continue to work for existing code. Use `client.threads.stream(...)` when you want a remote API that maps directly to the Event Streaming protocol and typed projections.
+
+---
+
+<div className="source-links">
+<Callout icon="terminal-2">
+    [Connect these docs](/use-these-docs) to Claude, VSCode, and more via MCP for real-time answers.
+</Callout>
+<Callout icon="edit">
+    [Edit this page on GitHub](https://github.com/langchain-ai/docs/edit/main/src/oss/langgraph/streaming/remote.mdx) or [file an issue](https://github.com/langchain-ai/docs/issues/new/choose).
+</Callout>
+</div>

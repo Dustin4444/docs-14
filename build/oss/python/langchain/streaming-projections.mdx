@@ -1,0 +1,208 @@
+---
+title: Streaming
+description: Stream real-time updates from LangChain agent runs
+---
+
+LangChain agents are built on LangGraph, so they support the same streaming stack with agent-focused projections for messages, tool calls, state, and custom updates.
+
+For most application and frontend use cases, use **Event Streaming** through `stream_events(..., version="v3")`. Event Streaming returns a run object with typed projections, so you can choose the view you need instead of parsing stream-mode tuples.
+
+<Note>
+Interested in streaming Pregel modes such as `updates`, `messages`, or `custom` directly? See the [Pregel Streaming page](/oss/python/langchain/streaming).
+</Note>
+
+```py
+from langchain.agents import create_agent
+
+
+def get_weather(city: str) -> str:
+    """Get weather for a city."""
+    return f"It's always sunny in {city}!"
+
+
+agent = create_agent(
+    model="gpt-5-nano",
+    tools=[get_weather],
+)
+
+run = agent.stream_events({
+    "messages": [{"role": "user", "content": "What is the weather in SF?"}],
+}, version="v3")
+
+for message in run.messages:
+    for delta in message.text:
+        print(delta, end="", flush=True)
+
+final_state = run.output
+```
+
+
+
+
+## What you can stream
+
+| Projection | Use |
+| ---------- | --- |
+| `run.messages` | Model message streams, one per LLM call. |
+| `message.text` | Text deltas and final text for a message. |
+| `message.reasoning` | Reasoning deltas for models that expose reasoning content. |
+| `message.tool_calls` | Tool-call argument chunks and finalized tool calls. |
+| `run.tool_calls` | Tool execution lifecycle, inputs, output deltas, final output, and errors. |
+| `run.values` | Agent state snapshots. |
+| `run.output` | Final agent state. |
+| `run.extensions` | Custom transformer projections. |
+| `for event in run` | Raw protocol events when you need exact arrival order. |
+
+`run.messages` yields `ChatModelStream` objects. Each message stream exposes `.text`, `.reasoning`, `.tool_calls`, and `.output`. Sync projections are iterable for live deltas and drainable for final values: use `str(message.text)` for final text and `message.tool_calls.get()` for finalized tool calls.
+
+
+
+
+## Agent messages
+
+Use `run.messages` when you want model output from each LLM call.
+
+```py
+run = agent.stream_events(input, version="v3")
+
+for message in run.messages:
+    print(f"[{message.node}] ", end="")
+    for delta in message.text:
+        print(delta, end="", flush=True)
+
+    full_message = message.output
+    usage = full_message.usage_metadata
+```
+
+
+
+
+## Reasoning content
+
+Reasoning content uses the same shape as text content, but it is available only when the selected model emits reasoning blocks.
+
+```py
+run = agent.stream_events(input, version="v3")
+
+for message in run.messages:
+    for delta in message.reasoning:
+        print(f"[thinking] {delta}", end="", flush=True)
+
+    for delta in message.text:
+        print(delta, end="", flush=True)
+```
+
+
+
+
+See the [reasoning guide](/oss/python/langchain/models#reasoning) and your provider's integration page for model configuration details.
+
+## Tool calls
+
+There are two useful tool-call projections:
+
+- `message.tool_calls` streams tool-call argument chunks while the model is producing the tool call.
+- `run.tool_calls` streams the lifecycle of tool execution after the tool call starts.
+
+```py
+run = agent.stream_events(input, version="v3")
+
+for message in run.messages:
+    for chunk in message.tool_calls:
+        print(f"tool call chunk: {chunk}")
+
+    finalized = message.tool_calls.get()
+    if finalized:
+        print(f"finalized tool calls: {finalized}")
+
+for call in run.tool_calls:
+    print(f"{call.tool_name}({call.input})")
+    for delta in call.output_deltas:
+        print(delta, end="", flush=True)
+    print(call.output, call.error)
+```
+
+
+
+
+## State and final output
+
+Use `run.values` for state snapshots and `run.output` for the final agent state.
+
+```py
+run = agent.stream_events(input, version="v3")
+
+for snapshot in run.values:
+    print(snapshot)
+
+final_state = run.output
+```
+
+
+
+
+## Multiple projections
+
+Use `run.interleave(...)` when you want one sync loop over multiple projections:
+
+```py
+run = agent.stream_events(input, version="v3")
+
+for name, item in run.interleave("messages", "tool_calls", "values"):
+    if name == "messages":
+        print(str(item.text))
+    elif name == "tool_calls":
+        print(item.tool_name, item.input)
+    elif name == "values":
+        print(item)
+```
+
+
+
+
+If you need exact arrival order across message text, reasoning, tool-call chunks, and state updates, iterate raw protocol events:
+
+```py
+for event in run:
+    print(event["method"], event["params"]["namespace"], event["params"]["data"])
+```
+
+
+
+
+## Custom updates
+
+Use custom stream transformers when your application needs a projection that is not built in, such as retrieval progress, artifacts, or domain-specific events.
+
+```py
+run = agent.stream_events(
+    input,
+    version="v3",
+    transformers=[ToolActivityTransformer],
+)
+
+for activity in run.extensions["tool_activity"]:
+    print(activity)
+```
+
+
+
+
+See [Custom transformers](/oss/python/langgraph/streaming/custom-transformers) for the transformer contract.
+
+## Related
+
+- [Pregel Streaming](/oss/python/langchain/streaming) covers low-level Pregel stream modes.
+- [Custom transformers](/oss/python/langgraph/streaming/custom-transformers) covers application-specific projections.
+- [Frontend streaming patterns](/oss/python/langchain/frontend/overview) shows UI use cases built on streamed state.
+
+---
+
+<div className="source-links">
+<Callout icon="terminal-2">
+    [Connect these docs](/use-these-docs) to Claude, VSCode, and more via MCP for real-time answers.
+</Callout>
+<Callout icon="edit">
+    [Edit this page on GitHub](https://github.com/langchain-ai/docs/edit/main/src/oss/langchain/streaming-projections.mdx) or [file an issue](https://github.com/langchain-ai/docs/issues/new/choose).
+</Callout>
+</div>

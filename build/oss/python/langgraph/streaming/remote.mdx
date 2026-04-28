@@ -1,0 +1,113 @@
+---
+title: Remote
+description: Stream deployed graphs and agents with the LangGraph SDK.
+---
+
+Use the LangGraph SDK to stream graphs and agents that run behind a LangGraph API server.
+
+The Python SDK currently streams deployed runs with `client.runs.stream(...)`.
+
+
+
+
+```py
+from langgraph_sdk import get_client
+
+client = get_client(url="http://localhost:2024")
+thread = await client.threads.create()
+
+async for chunk in client.runs.stream(
+    thread["thread_id"],
+    "simple-tool-graph",
+    input={
+        "messages": [{"role": "user", "content": "What is 42 * 17?"}],
+    },
+    stream_mode="messages-tuple",
+):
+    if chunk.event == "messages":
+        message_chunk, metadata = chunk.data
+        print(message_chunk.content, end="", flush=True)
+```
+
+
+
+
+## Thread streams
+
+Python remote streaming currently uses run stream chunks. Use `client.runs.stream(...)` with `stream_mode` values such as `updates`, `values`, `messages-tuple`, and `custom`.
+
+
+
+
+## Submit work
+
+Submit work when calling `client.runs.stream(...)`:
+
+```py
+async for chunk in client.runs.stream(
+    thread["thread_id"],
+    "my-agent",
+    input={"messages": [{"role": "user", "content": "hello"}]},
+    metadata={"source": "docs"},
+    stream_mode="updates",
+):
+    print(chunk.data)
+```
+
+
+
+
+For human-in-the-loop flows, use `thread.input.respond(...)` after an interrupt. See the frontend and SDK interrupt guides for UI patterns.
+
+## Subscribe to raw protocol events
+
+Most applications should use Event Streaming through typed projections. Use raw subscriptions for debugging, advanced routing, or custom rendering:
+
+```py
+async for chunk in client.runs.stream(
+    thread["thread_id"],
+    "my-agent",
+    input={"messages": [{"role": "user", "content": "hello"}]},
+    stream_mode=["updates", "messages-tuple", "custom"],
+):
+    print(chunk.event, chunk.data)
+```
+
+
+
+
+Use `namespaces` and `depth` to subscribe to specific graph, subgraph, and task events. See [Namespaces](/oss/python/langgraph/streaming/namespaces) for matching rules and recipes.
+
+## Reconnect and replay
+
+Remote streams carry monotonic sequence numbers. The SDK tracks ordering, deduplicates replayed events, and replays buffered server events when a subscription reconnects.
+
+The important application-level rule is to keep a thread ID when you need to reattach:
+
+```py
+async for chunk in client.runs.stream(
+    "thread-id",
+    "simple-tool-graph",
+    input={"messages": [{"role": "user", "content": "continue"}]},
+    stream_mode="updates",
+):
+    print(chunk.data)
+```
+
+
+
+
+## Run streaming APIs
+
+`client.runs.stream(...)` is the current Python SDK streaming API.
+
+---
+
+<div className="source-links">
+<Callout icon="terminal-2">
+    [Connect these docs](/use-these-docs) to Claude, VSCode, and more via MCP for real-time answers.
+</Callout>
+<Callout icon="edit">
+    [Edit this page on GitHub](https://github.com/langchain-ai/docs/edit/main/src/oss/langgraph/streaming/remote.mdx) or [file an issue](https://github.com/langchain-ai/docs/issues/new/choose).
+</Callout>
+</div>

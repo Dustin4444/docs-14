@@ -1,0 +1,96 @@
+---
+title: In-process vs remote
+description: Compare local Event Streaming runs with remote streaming over the LangGraph SDK.
+---
+
+LangGraph uses the same streaming event model in process and over the wire. The API surface changes because local code can hold rich objects directly, while remote clients receive serialized protocol events.
+
+## In-process streaming
+
+Use in-process streaming when your code runs in the same process as the graph:
+
+
+
+```ts
+const run = await graph.streamEvents(
+  { messages: [{ role: "user", content: "What is 42 * 17?" }] },
+  { version: "v3" }
+);
+
+for await (const message of run.messages) {
+  for await (const token of message.text) {
+    process.stdout.write(token);
+  }
+}
+
+const output = await run.output;
+```
+
+
+
+
+In-process streams can expose rich objects such as promises, async iterables, and class instances. Native projections such as `run.messages` and `run.subgraphs` are built with stream transformers over the graph's event flow.
+
+
+## Remote streaming
+
+Use remote streaming when the graph or agent runs behind a LangGraph API server:
+
+
+
+```ts
+import { Client } from "@langchain/langgraph-sdk";
+
+const client = new Client({ apiUrl: "http://localhost:2024" });
+const thread = client.threads.stream({ assistantId: "my-agent" });
+
+await thread.run.input({
+  input: { messages: [{ role: "user", content: "hello" }] },
+});
+
+for await (const message of thread.messages) {
+  console.log(await message.text);
+}
+
+await thread.close();
+```
+
+
+
+
+Remote streams use the same logical channels, such as `messages`, `values`, `tools`, `lifecycle`, and `custom:<name>`. The SDK opens subscriptions lazily when a projection is first accessed.
+
+
+## What is the same
+
+- Both surfaces are organized around messages, state values, subgraphs, output, and custom extensions.
+- Both support multiple independent consumers over the same run.
+- Both use namespaces to describe where an event came from in a graph tree.
+- Both can expose custom transformer data when the data is serializable.
+
+## What is different
+
+| Concern | In process | Remote |
+| ------- | ---------- | ------ |
+| Entry point | `graph.stream_events(..., version="v3")` | `client.threads.stream(...)` |
+| Transport | Direct async iterables | SSE, WebSocket, or custom adapter |
+| Projection source | Runtime objects | Serialized protocol events |
+| Custom streaming data | Local projections | Remote `StreamChannel` via `custom:<name>` |
+| Reconnect and replay | Not needed | Handled by sequence numbers and SDK buffers |
+
+## Choose a surface
+
+Use in-process streaming for backend orchestration, tests, local scripts, and runtime integrations. Use remote streaming for deployed graphs, browser clients, frontend frameworks, and services that need reconnectable streams.
+
+For the remote API, see [remote streaming](/oss/javascript/langgraph/streaming/remote). For custom projections, see [StreamChannel](/oss/javascript/langgraph/streaming/streamchannel).
+
+---
+
+<div className="source-links">
+<Callout icon="terminal-2">
+    [Connect these docs](/use-these-docs) to Claude, VSCode, and more via MCP for real-time answers.
+</Callout>
+<Callout icon="edit">
+    [Edit this page on GitHub](https://github.com/langchain-ai/docs/edit/main/src/oss/langgraph/streaming/in-process.mdx) or [file an issue](https://github.com/langchain-ai/docs/issues/new/choose).
+</Callout>
+</div>

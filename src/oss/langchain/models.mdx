@@ -159,6 +159,89 @@ const model = await initChatModel(
     To find all the parameters supported by a given chat model, head to the [chat model integrations](/oss/integrations/chat) page.
 </Info>
 
+## Select a model at runtime
+
+If your application lets users choose a model, such as from a settings page or model picker, use [middleware](/oss/langchain/middleware) to swap the model at runtime without rebuilding the agent.
+
+:::python
+Pass the user's model selection through [runtime context](/oss/langchain/runtime), then use a `wrap_model_call` middleware to override the model on each invocation using the @[`@wrap_model_call`] decorator:
+
+```python
+from collections.abc import Callable
+from dataclasses import dataclass
+
+from langchain.agents import create_agent
+from langchain.agents.middleware import ModelRequest, ModelResponse, wrap_model_call
+from langchain.chat_models import init_chat_model
+
+
+@dataclass
+class Context:
+    model: str
+
+
+@wrap_model_call
+def configurable_model(
+    request: ModelRequest,
+    handler: Callable[[ModelRequest], ModelResponse],
+) -> ModelResponse:
+    model_name = request.runtime.context.model
+    model = init_chat_model(model_name)
+    return handler(request.override(model=model))
+
+
+agent = create_agent(
+    model="anthropic:claude-sonnet-4-6",
+    tools=[],
+    middleware=[configurable_model],
+    context_schema=Context,
+)
+
+result = agent.invoke(
+    {"messages": [{"role": "user", "content": "Hello!"}]},
+    context=Context(model="openai:gpt-5.4"),
+)
+```
+:::
+
+:::js
+Pass the user's model selection through [runtime context](/oss/langchain/runtime), then use middleware with `wrapModelCall` to override the model on each invocation:
+
+```typescript
+import { createAgent, createMiddleware, initChatModel } from "langchain";
+import * as z from "zod";
+
+const contextSchema = z.object({
+  model: z.string(),
+});
+
+const configurableModel = createMiddleware({
+  name: "ConfigurableModel",
+  wrapModelCall: async (request, handler) => {
+    const modelName = request.runtime.context.model;
+    const model = await initChatModel(modelName);
+    return handler({ ...request, model });
+  },
+});
+
+const agent = createAgent({
+  model: "anthropic:claude-sonnet-4-6",
+  tools: [],
+  middleware: [configurableModel],
+  contextSchema,
+});
+
+const result = await agent.invoke(
+  { messages: [{ role: "user", content: "Hello!" }] },
+  { context: { model: "openai:gpt-5.4" } },
+);
+```
+:::
+
+<Tip>
+    For other dynamic model patterns, such as routing based on conversation complexity or cost optimization, see [Dynamic model](/oss/langchain/agents#dynamic-model) in the LangChain agents guide.
+</Tip>
+
 ---
 
 ## Invocation

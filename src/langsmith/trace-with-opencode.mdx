@@ -22,7 +22,7 @@ Create or update `.opencode/package.json`:
 ```json
 {
   "dependencies": {
-    "langsmith": "^0.5.26"
+    "langsmith": "latest"
   }
 }
 ```
@@ -35,7 +35,7 @@ Create or update `~/.config/opencode/package.json`:
 ```json
 {
   "dependencies": {
-    "langsmith": "^0.5.26"
+    "langsmith": "latest"
   }
 }
 ```
@@ -108,6 +108,74 @@ Enable OpenCode's experimental telemetry hooks in your OpenCode configuration:
 </Tabs>
 
 Restart OpenCode after adding the plugin and configuration.
+
+## End-to-end example
+
+The following example starts from an empty project directory and configures project-level OpenCode tracing.
+
+<Steps>
+<Step title="Create a project">
+
+```bash
+mkdir my-opencode-project
+cd my-opencode-project
+git init
+```
+
+</Step>
+<Step title="Create the OpenCode config files">
+
+```bash
+mkdir -p .opencode/plugins
+cat > .opencode/package.json <<'EOF'
+{
+  "dependencies": {
+    "langsmith": "latest"
+  }
+}
+EOF
+cat > .opencode/plugins/langsmith.ts <<'EOF'
+export { LangSmithPlugin } from "langsmith/experimental/opencode";
+EOF
+cat > opencode.json <<'EOF'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "experimental": {
+    "opentelemetry": true
+  }
+}
+EOF
+```
+
+</Step>
+<Step title="Set LangSmith environment variables">
+
+```bash
+export LANGSMITH_API_KEY=<your-api-key>
+export LANGSMITH_PROJECT=my-opencode-project
+```
+
+If your API key is linked to multiple workspaces, also set `LANGSMITH_WORKSPACE_ID`.
+
+</Step>
+<Step title="Start OpenCode and run a prompt">
+
+Start OpenCode from the project directory, then ask it to make a small change:
+
+```bash
+opencode
+```
+
+For example, prompt OpenCode with:
+
+```text
+Create a README for this project.
+```
+
+OpenCode installs the `langsmith` dependency from `.opencode/package.json` when it starts. After the assistant completes the turn, open the configured LangSmith project to view the trace.
+
+</Step>
+</Steps>
 
 ## View traces in LangSmith
 

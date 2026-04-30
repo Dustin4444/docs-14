@@ -12,6 +12,10 @@ LangGraph provides three composable mechanisms for handling node failures:
 2. **Retry policies** automatically re-run failed attempts based on exception type and backoff settings (`retry_policy=`).
 3. **Error handlers** run a recovery function after all retries are exhausted (`error_handler=`).
 
+<Note>
+Per-node timeouts and node-level error handlers require `langgraph>=1.2`.
+</Note>
+
 These compose in a fixed order: when a node attempt fails with any exception (including @[`NodeTimeoutError`] from a timeout), the retry policy decides whether to retry, and only after retries are exhausted does the error handler fire.
 
 ```mermaid
@@ -348,12 +352,5 @@ The behavior is identical to `add_node`: `NodeTimeoutError` is raised on timeout
 - **One handler per node**: each node can have at most one `error_handler`.
 - **Handler failures bubble up**: if the error handler itself raises an exception, that exception propagates as if the node had no handler.
 
-<Note>
-Per-node timeouts require `langgraph>=<TBD>`.
-</Note>
-
-<Note>
-Node-level error handlers require `langgraph>=<TBD>`.
-</Note>
 
 :::

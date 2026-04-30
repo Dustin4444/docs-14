@@ -12,16 +12,14 @@ LangGraph provides three composable mechanisms for handling node failures:
 2. **Retry policies** automatically re-run failed attempts based on exception type and backoff settings (`retry_policy=`).
 3. **Error handlers** run a recovery function after all retries are exhausted (`error_handler=`).
 
-These compose in a fixed order: a timeout fires first (raising @[`NodeTimeoutError`]), then the retry policy decides whether to retry, and only after retries are exhausted does the error handler fire.
+These compose in a fixed order: when a node attempt fails with any exception (including @[`NodeTimeoutError`] from a timeout), the retry policy decides whether to retry, and only after retries are exhausted does the error handler fire.
 
 ```mermaid
 %%{init:{'theme':'base','themeVariables':{'lineColor':'#40668D','primaryColor':'#E5F4FF','primaryTextColor':'#030710','primaryBorderColor':'#006DDD'}}}%%
 flowchart LR
     start([Attempt starts]) --> exec[Run node]
     exec -->|"success"| done([Continue graph])
-    exec -->|"raises"| retry{retry_policy<br/>matches?}
-    exec -->|"timeout fires"| timeoutErr[NodeTimeoutError]
-    timeoutErr --> retry
+    exec -->|"any exception<br/>including NodeTimeoutError"| retry{retry_policy<br/>matches?}
     retry -->|"yes, attempts left"| exec
     retry -->|"exhausted or absent"| handler{error_handler?}
     handler -->|"yes"| run_handler["Invoke handler<br/>with NodeError"]
@@ -33,7 +31,7 @@ flowchart LR
     classDef alert fill:#F8E8E6,stroke:#B27D75,stroke-width:2px,color:#634643
     classDef output fill:#EBD0F0,stroke:#885270,stroke-width:2px,color:#441E33
 
-    class exec,run_handler,timeoutErr process
+    class exec,run_handler process
     class retry,handler decision
     class bubble alert
     class done,route,start output
@@ -53,7 +51,41 @@ builder.add_node(
 )
 ```
 
-See [Add retry policies](/oss/langgraph/use-graph-api#add-retry-policies) for the full retry API, including `retry_on`, `initial_interval`, and `backoff_factor`.
+By default, the `retry_on` parameter uses `default_retry_on`, which retries on **any** exception except the following (and their subclasses):
+
+- `ValueError`
+- `TypeError`
+- `ArithmeticError`
+- `ImportError`
+- `LookupError`
+- `NameError`
+- `SyntaxError`
+- `RuntimeError`
+- `ReferenceError`
+- `StopIteration`
+- `StopAsyncIteration`
+- `OSError`
+
+For exceptions from popular HTTP libraries such as `requests` and `httpx`, it only retries on 5xx status codes. `NodeTimeoutError` is retryable by default.
+
+To customize which exceptions are retried, pass a callable or exception type to `retry_on`. You can also import `default_retry_on` and extend it:
+
+```python
+from langgraph.types import RetryPolicy, default_retry_on
+
+def custom_retry_on(exc: BaseException) -> bool:
+    if isinstance(exc, MyCustomError):
+        return False
+    return default_retry_on(exc)
+
+builder.add_node(
+    "call_api",
+    call_api,
+    retry_policy=RetryPolicy(max_attempts=3, retry_on=custom_retry_on),
+)
+```
+
+See [Add retry policies](/oss/langgraph/use-graph-api#add-retry-policies) for the full retry API, including `initial_interval` and `backoff_factor`.
 
 ## Configure a node timeout
 
@@ -134,7 +166,7 @@ builder.add_edge("long_running_node", END)
 
 ### Timeouts compose with retries
 
-`NodeTimeoutError` is a subclass of `TimeoutError`. If you want timed-out attempts to be retried, include `TimeoutError` (or `NodeTimeoutError`) in your retry policy's `retry_on`:
+The default retry policy retries `NodeTimeoutError`, so combining `timeout=` with `retry_policy=` works out of the box:
 
 ```python
 from langgraph.types import RetryPolicy, TimeoutPolicy
@@ -143,7 +175,7 @@ builder.add_node(
     "call_model",
     call_model,
     timeout=TimeoutPolicy(idle_timeout=30),
-    retry_policy=RetryPolicy(max_attempts=3, retry_on=TimeoutError),
+    retry_policy=RetryPolicy(max_attempts=3),
 )
 ```
 

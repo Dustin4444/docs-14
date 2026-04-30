@@ -300,9 +300,11 @@ Different errors need different handling strategies:
 
 <Tabs>
     <Tab title="Transient errors" icon="rotate">
-        Add a retry policy to automatically retry network issues and rate limits. Combine with `timeout=` to cap each attempt. See [Timeout and error handling](/oss/langgraph/timeout-and-error-handling) for the full lifecycle.
+        Add a retry policy to automatically retry network issues and rate limits.
 
     :::python
+
+    Combine with `timeout=` to cap each attempt. See [Timeout and error handling](/oss/langgraph/timeout-and-error-handling) for the full lifecycle.
 
     ```python
     from langgraph.types import RetryPolicy
@@ -472,9 +474,11 @@ Different errors need different handling strategies:
     </Tab>
 
     <Tab title="Saga / compensation" icon="arrows-exchange">
-        After retries are exhausted, run a recovery function that updates state and routes to a compensation branch. See [Timeout and error handling](/oss/langgraph/timeout-and-error-handling#add-an-error-handler) for the full pattern.
+        After retries are exhausted, run a recovery function that updates state and routes to a compensation branch.
 
     :::python
+
+    See [Timeout and error handling](/oss/langgraph/timeout-and-error-handling#add-an-error-handler) for the full pattern.
 
     ```python
     from langgraph.errors import NodeError

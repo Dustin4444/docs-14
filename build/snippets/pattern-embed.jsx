@@ -272,7 +272,7 @@ var PROD_AGENT_API_BASE = `${PROD_BASE}/api/langgraph`;
 function normalizeAgentServerBase(agentServer, useLocalPreview) {
   const trimmed = agentServer.trim();
   if (useLocalPreview) {
-    return "http://localhost:2024";
+    return "http://127.0.0.1:2024";
   }
   if (trimmed === "prod") {
     return PROD_AGENT_API_BASE;
@@ -467,7 +467,7 @@ var EMBED_CSS = `
       const iframe2 = document.createElement("iframe");
       iframe2.src = `${previewUrl}/${agentQuery}#/${patternRef.current}`;
       iframe2.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
-      iframe2.setAttribute("allow", "clipboard-write");
+      iframe2.setAttribute("allow", "clipboard-write; geolocation");
       iframe2.title = `${patternRef.current} pattern`;
       iframe2.setAttribute("data-cache-key", cacheKey);
       Object.assign(iframe2.style, {

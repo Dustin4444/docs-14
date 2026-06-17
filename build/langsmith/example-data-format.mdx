@@ -25,6 +25,10 @@ LangSmith stores examples in datasets as follows:
 
 To learn more about how examples are used in evaluation, read our how-to guide on [evaluating LLM applications](/langsmith/evaluate-llm-application).
 
+<Tip>
+The `outputs` field can also hold [assertions](/langsmith/assertions), free-form claims a reviewer wrote about a correct answer. Offline evaluators read them from `reference_outputs["assertions"]`.
+</Tip>
+
 ---
 
 <div className="source-links">

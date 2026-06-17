@@ -53,7 +53,7 @@ These services are optional, though a sandboxed environment is highly recommende
 
 ### LangSmith
 
-Many of the applications you build with LangChain will contain multiple steps with multiple invocations of LLM calls. As these applications get more complex, it becomes crucial to be able to inspect what exactly is going on inside your chain or agent. The best way to do this is with [LangSmith](https://smith.langchain.com).
+Many of the applications you build with LangChain will contain multiple steps with multiple invocations of LLM calls. As these applications get more complex, it becomes crucial to be able to inspect what exactly is going on inside your chain or agent. The best way to do this is with [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-deepagents-data-analysis).
 
 After you sign up at the link above, make sure to set your environment variables to start logging traces:
 
@@ -80,6 +80,38 @@ Deep Agents use [backends](/oss/python/deepagents/backends) to execute code in s
 See [available providers](/oss/python/deepagents/sandboxes#available-providers) for setup details.
 
 <Tabs>
+<Tab title="Local shell">
+<Warning>
+This backend provides unrestricted filesystem and shell access. Use only in controlled environments for development and testing. See the [security considerations](/oss/python/deepagents/backends#localshellbackend-local-shell) for more details.
+</Warning>
+
+```python
+from deepagents.backends import LocalShellBackend
+
+backend = LocalShellBackend(root_dir=".", env={"PATH": "/usr/bin:/bin"})
+```
+</Tab>
+  <Tab title="AgentCore">
+
+    <CodeGroup>
+    ```bash pip
+    pip install langchain-agentcore-codeinterpreter
+    ```
+    ```bash uv
+    uv add langchain-agentcore-codeinterpreter
+    ```
+    </CodeGroup>
+
+    ```python
+    from bedrock_agentcore.tools.code_interpreter_client import CodeInterpreter
+    from langchain_agentcore_codeinterpreter import AgentCoreSandbox
+
+    interpreter = CodeInterpreter(region="us-west-2")
+    interpreter.start()
+    backend = AgentCoreSandbox(interpreter=interpreter)
+    ```
+
+  </Tab>
   <Tab title="Daytona">
 
 <CodeGroup>
@@ -105,6 +137,27 @@ Verify the sandbox is ready:
 result = backend.execute("echo ready")
 print(result)
 # ExecuteResponse(output='ready', exit_code=0, ...)
+```
+
+  </Tab>
+  <Tab title="E2B">
+
+<CodeGroup>
+```bash pip
+pip install langchain-e2b
+```
+
+```bash uv
+uv add langchain-e2b
+```
+</CodeGroup>
+
+```python
+from e2b import Sandbox
+from langchain_e2b import E2BSandbox
+
+e2b_sandbox = Sandbox.create()
+backend = E2BSandbox(sandbox=e2b_sandbox)
 ```
 
   </Tab>
@@ -146,38 +199,6 @@ backend = RunloopSandbox(devbox=devbox)
 ```
 
   </Tab>
-  <Tab title="AgentCore">
-
-    <CodeGroup>
-    ```bash pip
-    pip install langchain-agentcore-codeinterpreter
-    ```
-    ```bash uv
-    uv add langchain-agentcore-codeinterpreter
-    ```
-    </CodeGroup>
-
-    ```python
-    from bedrock_agentcore.tools.code_interpreter_client import CodeInterpreter
-    from langchain_agentcore_codeinterpreter import AgentCoreSandbox
-
-    interpreter = CodeInterpreter(region="us-west-2")
-    interpreter.start()
-    backend = AgentCoreSandbox(interpreter=interpreter)
-    ```
-
-  </Tab>
-<Tab title="Local shell">
-<Warning>
-This backend provides unrestricted filesystem and shell access. Use only in controlled environments for development and testing. See the [security considerations](/oss/python/deepagents/backends#localshellbackend-local-shell) for more details.
-</Warning>
-
-```python
-from deepagents.backends import LocalShellBackend
-
-backend = LocalShellBackend(root_dir=".", env={"PATH": "/usr/bin:/bin"})
-```
-</Tab>
 </Tabs>
 
 ### Upload sample data
@@ -210,7 +231,7 @@ backend.upload_files([("/home/daytona/data/sales_data.csv", csv_bytes)])
 
 ## Implement custom tools
 
-Data analysis tasks might produce artefacts, like reports or plots.
+Data analysis tasks might produce artifacts, like reports or plots.
 The following simple [tool](/oss/python/langchain/tools) downloads them with `backend.download_files` and then uploads them using the Slack SDK.
 We could also ask our agent to list the relevant file paths instead of uploading them, so interested parties can obtain them separately as needed.
 
@@ -261,7 +282,7 @@ from deepagents import create_deep_agent
 checkpointer = InMemorySaver()
 
 agent = create_deep_agent(
-    model="google_genai:gemini-3.1-pro-preview",
+    model="google_genai:gemini-3.5-flash",
     tools=[slack_send_message],
     backend=backend,
     checkpointer=checkpointer,
@@ -675,7 +696,7 @@ Now that you've built a data analysis agent, explore these resources to extend i
 - [Backends](/oss/python/deepagents/backends): Learn about the Deep Agents backend system
 - [Sandboxes](/oss/python/deepagents/sandboxes): Review backends for sandboxed code execution, including security considerations and advanced configurations
 - [Customization](/oss/python/deepagents/customization): Discover how to customize your agent with different models, tools, prompts, and planning strategies
-- [CLI](/oss/python/deepagents/cli/overview): Try the Deep Agents CLI as a terminal coding agent to assist with data analysis and other agentic tasks locally
+- [Code](/oss/python/deepagents/code/overview): Try Deep Agents Code as a terminal coding agent to assist with data analysis and other agentic tasks locally
 - [Skills](/oss/python/deepagents/skills): Equip your agent with reusable skills for common workflows
 - [Human-in-the-loop](/oss/python/deepagents/human-in-the-loop): Add interactive approval steps for critical operations in your data analysis workflow
 

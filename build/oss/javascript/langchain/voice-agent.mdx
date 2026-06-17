@@ -265,7 +265,6 @@ import { HumanMessage } from "@langchain/core/messages";
 import { MemorySaver } from "@langchain/langgraph";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { v7 as uuid7 } from "uuid";
 
 // Define agent tools
 const addToOrder = tool(
@@ -310,7 +309,7 @@ async function* agentStream(
   eventStream: AsyncIterable<VoiceAgentEvent>
 ): AsyncGenerator<VoiceAgentEvent> {
   // Generate unique thread ID for conversation memory
-  const threadId = uuidv4();
+  const threadId = crypto.randomUUID();
 
   for await (const event of eventStream) {
     // Pass through all upstream events
@@ -461,7 +460,7 @@ export class CartesiaTTS {
 
 ### LangSmith
 
-Many of the applications you build with LangChain will contain multiple steps with multiple invocations of LLM calls. As these applications get more complex, it becomes crucial to be able to inspect what exactly is going on inside your chain or agent. The best way to do this is with [LangSmith](https://smith.langchain.com).
+Many of the applications you build with LangChain will contain multiple steps with multiple invocations of LLM calls. As these applications get more complex, it becomes crucial to be able to inspect what exactly is going on inside your chain or agent. The best way to do this is with [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-voice-agent).
 
 After you sign up at the link above, make sure to set your environment variables to start logging traces:
 

@@ -256,7 +256,70 @@ const innerMiddleware = createMiddleware({
 
 ## Create middleware
 
+python
+An `AgentMiddleware` subclass can declare three class attributes that the agent factory picks up at compile time:
 
+- `state_schema` — extend the agent state with custom fields. See [Custom state schema](#custom-state-schema).
+- `tools` — register additional tools that ship with the middleware (e.g., `write_todos` on the to-do list middleware).
+- `transformers` — register scope-aware stream transformer factories. See [Custom stream transformers](#custom-stream-transformers).
+:::
+
+`createMiddleware` accepts three configuration fields that the agent factory picks up at compile time:
+
+- `stateSchema` — extend the agent state with custom fields. See [Custom state schema](#custom-state-schema).
+- `tools` — register additional tools that ship with the middleware.
+- `streamTransformers` — register scope-aware stream transformer factories. See [Custom stream transformers](#custom-stream-transformers).
+
+
+**Example:**
+
+```python
+from langchain.agents.middleware import (
+    AgentMiddleware,
+    AgentState,
+    ModelRequest,
+    ModelResponse,
+)
+from langgraph.runtime import Runtime
+from typing import Any, Callable
+
+class LoggingMiddleware(AgentMiddleware):
+    def before_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+        print(f"About to call model with {len(state['messages'])} messages")
+        return None
+
+    def after_model(self, state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+        print(f"Model returned: {state['messages'][-1].content}")
+        return None
+
+    async def abefore_model(
+        self, state: AgentState, runtime: Runtime
+    ) -> dict[str, Any] | None:
+        # Async version of before_model
+        return None
+
+    async def aafter_model(
+        self, state: AgentState, runtime: Runtime
+    ) -> dict[str, Any] | None:
+        # Async version of after_model
+        print(f"Model returned: {state['messages'][-1].content}")
+        return None
+
+
+agent = create_agent(
+    model="gpt-5.5",
+    middleware=[LoggingMiddleware()],
+    tools=[...],
+)
+```
+
+**When to use classes:**
+- Defining both sync and async implementations for the same hook
+- Multiple hooks needed in a single middleware
+- Complex configuration required (e.g., configurable thresholds, custom models)
+- Reuse across projects with init-time configuration
+
+:::
 
 Use the `createMiddleware` function to define custom middleware:
 
@@ -321,7 +384,7 @@ const callCounterMiddleware = createMiddleware({
 });
 
 const agent = createAgent({
-  model: "gpt-5.4",
+  model: "gpt-5.5",
   tools: [...],
   middleware: [callCounterMiddleware],
 });
@@ -372,6 +435,39 @@ console.log(result._internalFlag); // undefined
 
 
 
+## Custom stream transformers
+
+
+
+<Note>Middleware-registered transformers require `langchain@1.4.3` or later.</Note>
+
+
+Middleware can register stream transformer factories that project events from the live agent stream onto typed extension channels. This is useful for surfacing counters, side-channel artifacts, partial outputs, or wire-level redaction without coupling to the framework's built-in projections.
+
+At compile time, middleware-registered factories merge with anything the caller passes directly to the agent factory. The [final ordering rules](/oss/javascript/langchain/event-streaming#register-transformers-on-middleware) keep the built-in `ToolCallTransformer` in front and let caller-supplied entries land last.
+
+
+
+Pass `streamTransformers` to `createMiddleware` as a tuple of factories. Each factory has the shape `() => StreamTransformer<any>` (zero arguments) and is invoked once per scope; returning a fresh transformer per call keeps each subgraph isolated.
+
+```typescript
+import { createAgent, createMiddleware } from "langchain";
+
+const toolActivityMiddleware = createMiddleware({
+  name: "ToolActivityMiddleware",
+  streamTransformers: [toolActivityTransformer],
+});
+
+const agent = createAgent({
+  model: "gpt-5-nano",
+  tools: [...],
+  middleware: [toolActivityMiddleware],
+});
+```
+
+
+See [Register transformers on middleware](/oss/javascript/langchain/event-streaming#register-transformers-on-middleware) for the full ordering rules and the PII redaction example.
+
 ## Custom context
 
 Middleware can define a custom context schema to access per-invocation metadata. Unlike state, context is read-only and not persisted between invocations. This makes it ideal for:
@@ -412,7 +508,7 @@ const userContextMiddleware = createMiddleware({
 });
 
 const agent = createAgent({
-  model: "gpt-5.4",
+  model: "gpt-5.5",
   middleware: [userContextMiddleware],
   tools: [],
   contextSchema,
@@ -449,7 +545,7 @@ When using multiple middleware, understand how they execute:
 
 ```typescript
 const agent = createAgent({
-  model: "gpt-5.4",
+  model: "gpt-5.5",
   middleware: [middleware1, middleware2, middleware3],
   tools: [...],
 });
@@ -507,7 +603,7 @@ To exit early from middleware, return a dictionary with `jump_to`:
 import { createAgent, createMiddleware, AIMessage } from "langchain";
 
 const agent = createAgent({
-  model: "gpt-5.4",
+  model: "gpt-5.5",
   middleware: [
     createMiddleware({
       name: "BlockedContentMiddleware",
@@ -577,7 +673,7 @@ Use [`SystemMessage.concat`](https://reference.langchain.com/javascript/langchai
 
 ### Dynamically selecting tools
 
-Select relevant tools at runtime to improve performance and accuracy. This section covers filtering pre-registered tools. For registering tools that are discovered at runtime (e.g., from MCP servers), see [Runtime tool registration](/oss/javascript/langchain/agents#dynamic-tools).
+Select relevant tools at runtime to improve performance and accuracy. This section covers filtering pre-registered tools. For registering tools that are discovered at runtime (e.g., from MCP servers), see [Runtime tool registration](/oss/javascript/langchain/tools#dynamic-tool-selection).
 
 **Benefits:**
 - **Shorter prompts** - Reduce complexity by exposing only relevant tools
@@ -600,7 +696,7 @@ const toolSelectorMiddleware = createMiddleware({
 });
 
 const agent = createAgent({
-  model: "gpt-5.4",
+  model: "gpt-5.5",
   tools: allTools,
   middleware: [toolSelectorMiddleware],
 });
@@ -728,7 +824,7 @@ const myOtherMiddleware = createMiddleware({
 });
 
 const agent = createAgent({
-  model: "google_genai:gemini-3.1-pro-preview",
+  model: "google_genai:gemini-3.5-flash",
   systemPrompt: "You are a helpful assistant.",
   middleware: [myMiddleware, myOtherMiddleware],
 });

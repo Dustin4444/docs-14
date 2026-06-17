@@ -83,7 +83,7 @@ For more details, see our [Installation guide](/oss/javascript/langchain/install
 
 ### LangSmith
 
-Set up [LangSmith](https://smith.langchain.com) to inspect what is happening inside your agent. Then set the following environment variables:
+Set up [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-multi-agent-router-knowledge-base) to inspect what is happening inside your agent. Then set the following environment variables:
 
 
 
@@ -260,7 +260,7 @@ Create an agent for each vertical. Each agent has domain-specific tools and a pr
 import { createAgent } from "langchain";
 import { ChatOpenAI } from "@langchain/openai";
 
-const llm = new ChatOpenAI({ model: "gpt-5.4" });
+const llm = new ChatOpenAI({ model: "gpt-5.5" });
 
 const githubAgent = createAgent({
   model: llm,
@@ -674,7 +674,7 @@ const getThread = tool(
 import { createAgent } from "langchain";
 import { ChatOpenAI } from "@langchain/openai";
 
-const llm = new ChatOpenAI({ model: "gpt-5.4" });
+const llm = new ChatOpenAI({ model: "gpt-5.5" });
 
 const githubAgent = createAgent({
   model: llm,
@@ -949,7 +949,7 @@ For simpler cases with dynamic tool selection, consider the [subagents pattern](
 - Learn about [handoffs](/oss/javascript/langchain/multi-agent/handoffs) for agent-to-agent conversations
 - Explore the [subagents pattern](/oss/javascript/langchain/multi-agent/subagents-personal-assistant) for centralized orchestration
 - Read the [multi-agent overview](/oss/javascript/langchain/multi-agent) to compare different patterns
-- Use [LangSmith](https://smith.langchain.com) to debug and monitor your router
+- Use [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-multi-agent-router-knowledge-base) to debug and monitor your router
 
 ---
 

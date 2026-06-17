@@ -3,7 +3,6 @@ title: Memory
 ---
 
 
-
 AI applications need [memory](/oss/javascript/concepts/memory) to share context across multiple interactions. In LangGraph, you can add two types of memory:
 
 * [Add short-term memory](#add-short-term-memory) as a part of your agent's [state](/oss/javascript/langgraph/graph-api#state) to enable multi-turn conversations.
@@ -41,7 +40,7 @@ In production, use a checkpointer backed by a database:
     ```typescript
     import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 
-    const DB_URI = "postgresql://postgres:postgres@localhost:5442/postgres?sslmode=disable";
+    const DB_URI = "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable";
     const checkpointer = PostgresSaver.fromConnString(DB_URI);
 
     const builder = new StateGraph(...);
@@ -85,7 +84,7 @@ In production, use a checkpointer backed by a database:
 
   const model = new ChatAnthropic({ model: "claude-haiku-4-5-20251001" });
 
-  const DB_URI = "postgresql://postgres:postgres@localhost:5442/postgres?sslmode=disable";
+  const DB_URI = "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable";
   const checkpointer = PostgresSaver.fromConnString(DB_URI);
   // await checkpointer.setup();
 
@@ -244,7 +243,6 @@ Once you compile a graph with a store, LangGraph automatically injects the store
 
 ```typescript
 import { StateGraph, StateSchema, MessagesValue, GraphNode, START } from "@langchain/langgraph";
-import { v4 as uuidv4 } from "uuid";
 
 const State = new StateSchema({
   messages: MessagesValue,
@@ -264,7 +262,7 @@ const callModel: GraphNode<typeof State> = async (state, runtime) => {
   // ... Use memories in model call
 
   // Store a new memory
-  await runtime.store?.put(namespace, uuidv4(), { data: "User prefers dark mode" });
+  await runtime.store?.put(namespace, crypto.randomUUID(), { data: "User prefers dark mode" });
 };
 
 const builder = new StateGraph(State)
@@ -292,7 +290,7 @@ In production, use a store backed by a database:
     ```typescript
     import { PostgresStore } from "@langchain/langgraph-checkpoint-postgres/store";
 
-    const DB_URI = "postgresql://postgres:postgres@localhost:5442/postgres?sslmode=disable";
+    const DB_URI = "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable";
     const store = PostgresStore.fromConnString(DB_URI);
 
     const builder = new StateGraph(...);
@@ -332,7 +330,6 @@ In production, use a store backed by a database:
   import { StateGraph, StateSchema, MessagesValue, GraphNode, START } from "@langchain/langgraph";
   import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
   import { PostgresStore } from "@langchain/langgraph-checkpoint-postgres/store";
-  import { v4 as uuidv4 } from "uuid";
 
   const State = new StateSchema({
     messages: MessagesValue,
@@ -351,7 +348,7 @@ In production, use a store backed by a database:
     const lastMessage = state.messages.at(-1);
     if (lastMessage?.content?.toLowerCase().includes("remember")) {
       const memory = "User name is Bob";
-      await runtime.store?.put(namespace, uuidv4(), { data: memory });
+      await runtime.store?.put(namespace, crypto.randomUUID(), { data: memory });
     }
 
     const response = await model.invoke([
@@ -361,7 +358,7 @@ In production, use a store backed by a database:
     return { messages: [response] };
   };
 
-  const DB_URI = "postgresql://postgres:postgres@localhost:5442/postgres?sslmode=disable";
+  const DB_URI = "postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable";
 
   const store = PostgresStore.fromConnString(DB_URI);
   const checkpointer = PostgresSaver.fromConnString(DB_URI);
@@ -403,7 +400,6 @@ In production, use a store backed by a database:
   import { ChatAnthropic } from "@langchain/anthropic";
   import { MemorySaver, StateGraph, StateSchema, MessagesValue, GraphNode, START } from "@langchain/langgraph";
   import { MongoDBStore } from "@langchain/langgraph-checkpoint-mongodb";
-  import { v4 as uuidv4 } from "uuid";
 
   const State = new StateSchema({
     messages: MessagesValue,
@@ -422,7 +418,7 @@ In production, use a store backed by a database:
     const lastMessage = state.messages.at(-1);
     if (lastMessage?.content?.toLowerCase().includes("remember")) {
       const memory = "User name is Bob";
-      await runtime.store?.put(namespace, uuidv4(), { data: memory });
+      await runtime.store?.put(namespace, crypto.randomUUID(), { data: memory });
     }
 
     const response = await model.invoke([
@@ -962,7 +958,6 @@ const summarizeConversation: GraphNode<typeof State> = async (state) => {
     MemorySaver,
   } from "@langchain/langgraph";
   import * as z from "zod";
-  import { v4 as uuidv4 } from "uuid";
 
   const memory = new MemorySaver();
 
@@ -982,7 +977,7 @@ const summarizeConversation: GraphNode<typeof State> = async (state) => {
     let { messages } = state;
     if (summary) {
       const systemMessage = new SystemMessage({
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         content: `Summary of conversation earlier: ${summary}`,
       });
       messages = [systemMessage, ...messages];
@@ -1019,7 +1014,7 @@ const summarizeConversation: GraphNode<typeof State> = async (state) => {
 
     const allMessages = [
       ...messages,
-      new HumanMessage({ id: uuidv4(), content: summaryMessage }),
+      new HumanMessage({ id: crypto.randomUUID(), content: summaryMessage }),
     ];
 
     const response = await model.invoke(allMessages);
@@ -1134,7 +1129,7 @@ await checkpointer.deleteThread(threadId);
 
 ## Database management
 
-If you are using any database-backed persistence implementation (such as Postgres or Redis) to store short and/or long-term memory, you will need to run migrations to set up the required schema before you can use it with your database.
+If you are using any database-backed persistence implementation (such as Postgres, Redis, or Oracle) to store short and/or long-term memory, you will need to run migrations to set up the required schema before you can use it with your database.
 
 By convention, most database-specific libraries define a `setup()` method on the checkpointer or store instance that runs the required migrations. However, you should check with your specific implementation of [`BaseCheckpointSaver`](https://reference.langchain.com/javascript/langchain-langgraph/index/BaseCheckpointSaver) or [`BaseStore`](https://reference.langchain.com/javascript/langchain-core/stores/BaseStore) to confirm the exact method name and usage.
 

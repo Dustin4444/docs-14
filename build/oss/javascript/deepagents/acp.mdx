@@ -59,7 +59,7 @@ npx deepagents-acp
 
 
 
-<Card title="DeepAgents ACP on npm" icon="brand-npm" href="https://www.npmjs.com/package/deepagents-acp">
+<Card title="Deep Agents ACP on npm" icon="brand-npm" href="https://www.npmjs.com/package/deepagents-acp">
   The `deepagents-acp` package provides both a CLI and a programmatic API for exposing deep agents over ACP.
 </Card>
 
@@ -155,7 +155,7 @@ Then point Zed at it:
 }
 ```
 
-Open Zed's Agents panel and start a DeepAgents thread.
+Open Zed's Agents panel and start a Deep Agents thread.
 
 
 
@@ -163,7 +163,7 @@ Open Zed's Agents panel and start a DeepAgents thread.
 
 ### ACP Registry
 
-DeepAgents is available in the [ACP Agent Registry](https://agentclientprotocol.com/registry/index) for one-click installation in Zed and JetBrains IDEs. When an ACP client supports the registry, users can discover and install Deep Agents without any manual configuration.
+Deep Agents is available in the [ACP Agent Registry](https://agentclientprotocol.com/registry/index) for one-click installation in Zed and JetBrains IDEs. When an ACP client supports the registry, users can discover and install Deep Agents without any manual configuration.
 
 
 
@@ -266,7 +266,7 @@ await server.start();
 | `model`        | `string`                                       | LLM model (default: `"claude-sonnet-4-5-20250929"`) |
 | `tools`        | `StructuredTool[]`                             | Custom LangChain tools                            |
 | `systemPrompt` | `string`                                       | Custom system prompt                              |
-| `middleware`    | `AgentMiddleware[]`                            | Custom middleware                                 |
+| `middleware`    | `AgentMiddleware[]`                            | Custom middleware appended to the [default stack](/oss/javascript/deepagents/customization#default-stack-main-agent) |
 | `backend`      | `AnyBackendProtocol`                           | Filesystem backend                                |
 | `skills`       | `string[]`                                     | Skill source paths                                |
 | `memory`       | `string[]`                                     | Memory source paths (AGENTS.md)                   |

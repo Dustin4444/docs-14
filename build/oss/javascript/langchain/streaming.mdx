@@ -3,8 +3,14 @@ title: Streaming
 description: Stream real-time updates from agent runs
 ---
 
+import StreamingAgentProgressJs from '/snippets/code-samples/streaming-agent-progress-js.mdx';
+import StreamingAgentProgressPy from '/snippets/code-samples/streaming-agent-progress-py.mdx';
 import StreamingReasoningTokensPy from '/snippets/code-samples/streaming-reasoning-tokens-py.mdx';
 import StreamingReasoningTokensJs from '/snippets/code-samples/streaming-reasoning-tokens-js.mdx';
+
+<Tip>
+For new applications, we recommend [event streaming](/oss/javascript/langchain/event-streaming)—the typed-projection API introduced in LangChain v1.3. Event streaming gives you separate iterators per projection (messages, values, tool calls, subgraphs) so you can consume them independently instead of branching on `stream_mode` chunks.
+</Tip>
 
 LangChain implements a streaming system to surface real-time updates.
 
@@ -52,83 +58,13 @@ For example, if you have an agent that calls a tool once, you should see the fol
 
 
 
-```typescript
-import z from "zod";
-import { createAgent, tool } from "langchain";
+Pass a `thread_id` via `configurable` so the conversation is checkpointed and follow-up turns can resume the same history. `thread_id` is independent of `streamMode`; you can also pass `context` alongside it for per-run data your tools read from `runtime.context`.
 
-const getWeather = tool(
-    async ({ city }) => {
-        return `The weather in ${city} is always sunny!`;
-    },
-    {
-        name: "get_weather",
-        description: "Get weather for a given city.",
-        schema: z.object({
-        city: z.string(),
-        }),
-    }
-);
+<StreamingAgentProgressJs />
 
-const agent = createAgent({
-    model: "gpt-5-nano",
-    tools: [getWeather],
-});
-
-for await (const chunk of await agent.stream(
-    { messages: [{ role: "user", content: "what is the weather in sf" }] },
-    { streamMode: "updates" }
-)) {
-    const [step, content] = Object.entries(chunk)[0];
-    console.log(`step: ${step}`);
-    console.log(`content: ${JSON.stringify(content, null, 2)}`);
-}
-/**
- * step: model
- * content: {
- *   "messages": [
- *     {
- *       "kwargs": {
- *         // ...
- *         "tool_calls": [
- *           {
- *             "name": "get_weather",
- *             "args": {
- *               "city": "San Francisco"
- *             },
- *             "type": "tool_call",
- *             "id": "call_0qLS2Jp3MCmaKJ5MAYtr4jJd"
- *           }
- *         ],
- *         // ...
- *       }
- *     }
- *   ]
- * }
- * step: tools
- * content: {
- *   "messages": [
- *     {
- *       "kwargs": {
- *         "content": "The weather in San Francisco is always sunny!",
- *         "name": "get_weather",
- *         // ...
- *       }
- *     }
- *   ]
- * }
- * step: model
- * content: {
- *   "messages": [
- *     {
- *       "kwargs": {
- *         "content": "The latest update says: The weather in San Francisco is always sunny!\n\nIf you'd like real-time details (current temperature, humidity, wind, and today's forecast), I can pull the latest data for you. Want me to fetch that?",
- *         // ...
- *       }
- *     }
- *   ]
- * }
- */
-```
+<Note>
+Persisting conversation history with `thread_id` requires the agent to be configured with a [checkpointer](/oss/javascript/langchain/long-term-memory). On [LangSmith deployments](/langsmith/deployment) a checkpointer is provisioned automatically. Locally, pass one explicitly, for example `createAgent({ ..., checkpointer: new MemorySaver() })`. The remaining snippets on this page omit `thread_id` for brevity, but you should pass it in production.
+</Note>
 
 
 ## LLM tokens
@@ -307,7 +243,7 @@ In some applications you might need to disable streaming of individual tokens fo
 
 - Working with [multi-agent](/oss/javascript/langchain/multi-agent) systems to control which agents stream their output
 - Mixing models that support streaming with those that do not
-- Deploying to [LangSmith](/langsmith/home) and wanting to prevent certain model outputs from being streamed to the client
+- Deploying to [LangSmith](/langsmith/observability) and wanting to prevent certain model outputs from being streamed to the client
 
 
 
@@ -317,7 +253,7 @@ Set `streaming: false` when initializing the model.
 import { ChatOpenAI } from "@langchain/openai";
 
 const model = new ChatOpenAI({
-  model: "gpt-5.4",
+  model: "gpt-5.5",
   streaming: false,  // [!code highlight]
 });
 ```
@@ -340,7 +276,7 @@ See the [LangGraph streaming guide](/oss/javascript/langgraph/streaming#disable-
 
 ## Related
 
-- [Frontend streaming](/oss/javascript/langchain/streaming/frontend)—Build React UIs with `useStream` for real-time agent interactions
+- [Frontend streaming](/oss/javascript/langchain/frontend/overview)—Build React UIs with [`useStream`](https://reference.langchain.com/javascript/langchain-react/index/useStream) for real-time agent interactions
 - [Streaming with chat models](/oss/javascript/langchain/models#stream)—Stream tokens directly from a chat model without using an agent or graph
 - [Reasoning with chat models](/oss/javascript/langchain/models#reasoning)—Configure and access reasoning output from chat models
 - [Standard content blocks](/oss/javascript/langchain/messages#standard-content-blocks)—Understand the normalized content block format used for reasoning, text, and other content types

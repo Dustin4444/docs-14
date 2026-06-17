@@ -6,7 +6,7 @@ sidebarTitle: Observability
 import ObservabilityPy from '/snippets/oss/observability-py.mdx';
 import ObservabilityJs from '/snippets/oss/observability-js.mdx';
 
-As you build and run agents with LangChain, you need visibility into how they behave: which [tools](/oss/python/langchain/tools) they call, what prompts they generate, and how they make decisions. LangChain agents built with [`create_agent`](https://reference.langchain.com/python/langchain/agents/factory/create_agent) automatically support tracing through [LangSmith](/langsmith/home), a platform for capturing, debugging, evaluating, and monitoring LLM application behavior.
+As you build and run agents with LangChain, you need visibility into how they behave: which [tools](/oss/python/langchain/tools) they call, what prompts they generate, and how they make decisions. LangChain agents built with [`create_agent`](https://reference.langchain.com/python/langchain/agents/factory/create_agent) automatically support tracing through [LangSmith](/langsmith/observability), a platform for capturing, debugging, evaluating, and monitoring LLM application behavior.
 
 
 
@@ -19,7 +19,7 @@ This guide shows you how to enable tracing for your LangChain agents and use Lan
 
 Before you begin, ensure you have the following:
 
-- **A LangSmith account**: Sign up (for free) or log in at [smith.langchain.com](https://smith.langchain.com).
+- **A LangSmith account**: Sign up (for free) or log in at [smith.langchain.com](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-observability).
 - **A LangSmith API key**: Follow the [Create an API key](/langsmith/create-account-api-key) guide.
 
 ## Enable tracing
@@ -50,7 +50,7 @@ def search_web(query: str):
     return f"Search results for: {query}"
 
 agent = create_agent(
-    model="gpt-5.4",
+    model="gpt-5.5",
     tools=[send_email, search_web],
     system_prompt="You are a helpful assistant that can send emails and search the web."
 )

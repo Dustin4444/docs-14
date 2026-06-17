@@ -4,6 +4,8 @@ title: Subagents
 
 In the **subagents** architecture, a central main [agent](/oss/javascript/langchain/agents) (often referred to as a **supervisor**) coordinates subagents by calling them as [tools](/oss/javascript/langchain/tools). The main agent decides which subagent to invoke, what input to provide, and how to combine results. Subagents are stateless—they don't remember past interactions, with all conversation memory maintained by the main agent. This provides [context](/oss/javascript/langchain/context-engineering) isolation: each subagent invocation works in a clean context window, preventing context bloat in the main conversation.
 
+For built-in subagent support, see [Deep Agents](/oss/javascript/deepagents/subagents).
+
 ```mermaid
 graph LR
     A[User] --> B[Main Agent]
@@ -51,7 +53,7 @@ import { createAgent, tool } from "langchain";
 import { z } from "zod";
 
 // Create a subagent
-const subagent = createAgent({ model: "google_genai:gemini-3.1-pro-preview", tools: [...] });
+const subagent = createAgent({ model: "google_genai:gemini-3.5-flash", tools: [...] });
 
 // Wrap it as a tool
 const callResearchAgent = tool(
@@ -69,7 +71,7 @@ const callResearchAgent = tool(
 );
 
 // Main agent with subagent as a tool
-const mainAgent = createAgent({ model: "google_genai:gemini-3.1-pro-preview", tools: [callResearchAgent] });
+const mainAgent = createAgent({ model: "google_genai:gemini-3.5-flash", tools: [callResearchAgent] });
 ```
 
 
@@ -291,12 +293,12 @@ import * as z from "zod";
 
 // Sub-agents developed by different teams
 const researchAgent = createAgent({
-  model: "gpt-5.4",
+  model: "gpt-5.5",
   prompt: "You are a research specialist...",
 });
 
 const writerAgent = createAgent({
-  model: "gpt-5.4",
+  model: "gpt-5.5",
   prompt: "You are a writing specialist...",
 });
 
@@ -336,7 +338,7 @@ Available agents:
 
 // Main coordinator agent
 const mainAgent = createAgent({
-  model: "gpt-5.4",
+  model: "gpt-5.5",
   tools: [task],
   prompt: (
     "You coordinate specialized sub-agents. " +

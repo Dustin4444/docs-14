@@ -44,22 +44,55 @@ We can create a simple indexing pipeline and RAG chain to do this in ~40 lines o
 <Accordion title="Expand for full code snippet">
 
 ```python
+
+# === IMPORTANT: SETUP REMINDER FOR BEGINNERS ===
+# This full example assumes you have already run the code from the
+# "Components" section above to define these 3 variables:
+#
+#   1. embeddings = ...          (from "Select an embeddings model")
+#   2. vector_store = ...        (from "Select a vector store")
+#   3. model = ...               (from "Select a chat model")
+#
+# If you skipped those steps, add them here first (example below):
+#
+# from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+# from langchain_chroma import Chroma
+#
+# embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+# vector_store = Chroma.from_documents(
+#     documents=all_splits,
+#     embedding=embeddings,
+#     collection_name="rag_tutorial"
+# )
+# model = ChatOpenAI(model="gpt-4o-mini")
+#
+# Now continue with the rest of the code...
+
 import bs4
+import requests
 from langchain.agents import AgentState, create_agent
-from langchain_community.document_loaders import WebBaseLoader
 from langchain.messages import MessageLikeRepresentation
+from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+
+# Below is a minimal helper for demonstration purposes.
+def load_web_page(url: str, bs_kwargs: dict | None = None) -> list[Document]:
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = bs4.BeautifulSoup(response.text, "html.parser", **(bs_kwargs or {}))
+    return [Document(page_content=soup.get_text(), metadata={"source": url})]
+
+
 # Load and chunk contents of the blog
-loader = WebBaseLoader(
-    web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
-    bs_kwargs=dict(
-        parse_only=bs4.SoupStrainer(
+docs = load_web_page(
+    "https://lilianweng.github.io/posts/2023-06-23-agent/",
+    bs_kwargs={
+        "parse_only": bs4.SoupStrainer(
             class_=("post-content", "post-title", "post-header")
         )
-    ),
+    },
 )
-docs = loader.load()
 
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 all_splits = text_splitter.split_documents(docs)
@@ -137,10 +170,10 @@ This tutorial requires these langchain dependencies:
 
 <CodeGroup>
 ```bash pip
-pip install langchain langchain-text-splitters langchain-community bs4
+pip install langchain langchain-text-splitters bs4 requests
 ```
 ```bash uv
-uv add langchain langchain-text-splitters langchain-community bs4
+uv add langchain langchain-text-splitters bs4 requests
 ```
 </CodeGroup>
 
@@ -150,7 +183,7 @@ For more details, see our [Installation guide](/oss/python/langchain/install).
 
 ### LangSmith
 
-Many of the applications you build with LangChain will contain multiple steps with multiple invocations of LLM calls. As these applications get more complex, it becomes crucial to be able to inspect what exactly is going on inside your chain or agent. The best way to do this is with [LangSmith](https://smith.langchain.com).
+Many of the applications you build with LangChain will contain multiple steps with multiple invocations of LLM calls. As these applications get more complex, it becomes crucial to be able to inspect what exactly is going on inside your chain or agent. The best way to do this is with [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-rag).
 
 After you sign up at the link above, make sure to set your environment variables to start logging traces:
 
@@ -169,6 +202,10 @@ os.environ["LANGSMITH_TRACING"] = "true"
 os.environ["LANGSMITH_API_KEY"] = getpass.getpass()
 ```
 
+
+<Tip>
+We recommend you also set up [LangSmith Engine](/langsmith/engine) which monitors your traces, detects issues, and proposes fixes.
+</Tip>
 
 ### Components
 
@@ -195,13 +232,13 @@ Select a vector store:
 <Note>
 **This section is an abbreviated version of the content in the [semantic search tutorial](/oss/python/langchain/knowledge-base).**
 
-If your data is already indexed and available for search (i.e., you have a function to execute a search), or if you're comfortable with [document loaders](/oss/python/integrations/document_loaders), [embeddings](/oss/python/integrations/embeddings), and [vector stores](/oss/python/integrations/vectorstores), feel free to skip to the next section on [retrieval and generation](/oss/python/langchain/rag#2-retrieval-and-generation).
+If your data is already indexed and available for search (i.e., you have a function to execute a search), or if you're comfortable with [embeddings](/oss/python/integrations/embeddings) and [vector stores](/oss/python/integrations/vectorstores), feel free to skip to the next section on [retrieval and generation](/oss/python/langchain/rag#2-retrieval-and-generation).
 
 </Note>
 
 Indexing commonly works as follows:
 
-1. **Load**: First we need to load our data. This is done with [Document Loaders](/oss/python/integrations/document_loaders).
+1. **Load**: First we need to load our data into [`Document`](https://reference.langchain.com/python/langchain-core/documents/base/Document) objects.
 2. **Split**: [Text splitters](/oss/python/integrations/splitters) break large `Documents` into smaller chunks. This is useful both for indexing data and passing it into a model, as large chunks are harder to search over and won't fit in a model's finite context window.
 3. **Store**: We need somewhere to store and index our splits, so that they can be searched over later. This is often done using a [VectorStore](/oss/python/integrations/vectorstores) and [Embeddings](/oss/python/integrations/embeddings) model.
 
@@ -209,21 +246,30 @@ Indexing commonly works as follows:
 
 ### Loading documents
 
-We need to first load the blog post contents. We can use [DocumentLoaders](/oss/python/integrations/document_loaders) for this, which are objects that load in data from a source and return a list of [Document](https://reference.langchain.com/python/langchain-core/documents/base/Document) objects.
+We need to first load the blog post contents into a list of [Document](https://reference.langchain.com/python/langchain-core/documents/base/Document) objects.
 
-In this case we'll use the [`WebBaseLoader`](/oss/python/integrations/document_loaders/web_base), which uses `urllib` to load HTML from web URLs and `BeautifulSoup` to parse it to text. We can customize the HTML -\> text parsing by passing in parameters into the `BeautifulSoup` parser via `bs_kwargs` (see [BeautifulSoup docs](https://beautiful-soup-4.readthedocs.io/en/latest/#beautifulsoup)). In this case only HTML tags with class “post-content”, “post-title”, or “post-header” are relevant, so we'll remove all others.
+We'll use `requests` to fetch the page and `BeautifulSoup` to parse it to text. We can customize the HTML -\> text parsing by passing in parameters into the `BeautifulSoup` parser via `bs_kwargs` (see [BeautifulSoup docs](https://beautiful-soup-4.readthedocs.io/en/latest/#beautifulsoup)). In this case only HTML tags with class "post-content", "post-title", or "post-header" are relevant, so we'll remove all others.
 
 ```python
 import bs4
-from langchain_community.document_loaders import WebBaseLoader
+import requests
+from langchain_core.documents import Document
+
+
+# Below is a minimal helper for demonstration purposes.
+def load_web_page(url: str, bs_kwargs: dict | None = None) -> list[Document]:
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = bs4.BeautifulSoup(response.text, "html.parser", **(bs_kwargs or {}))
+    return [Document(page_content=soup.get_text(), metadata={"source": url})]
+
 
 # Only keep post title, headers, and content from the full HTML.
 bs4_strainer = bs4.SoupStrainer(class_=("post-title", "post-header", "post-content"))
-loader = WebBaseLoader(
-    web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
+docs = load_web_page(
+    "https://lilianweng.github.io/posts/2023-06-23-agent/",
     bs_kwargs={"parse_only": bs4_strainer},
 )
-docs = loader.load()
 
 assert len(docs) == 1
 print(f"Total characters: {len(docs[0].page_content)}")
@@ -247,12 +293,6 @@ In
 ```
 
 
-**Go deeper**
-
-`DocumentLoader`: Object that loads data from a source as list of `Documents`.
-
-- [Integrations](/oss/python/integrations/document_loaders/): 160+ integrations to choose from.
-- [`BaseLoader`](https://reference.langchain.com/python/langchain-core/document_loaders/base/BaseLoader): API reference for the base interface.
 
 ### Splitting documents
 
@@ -285,7 +325,6 @@ chunks for storage and retrieval.
 
 - [Integrations](/oss/python/integrations/splitters/)
 - [Interface](https://reference.langchain.com/python/langchain-text-splitters/base/TextSplitter): API reference for the base interface.
-
 
 
 

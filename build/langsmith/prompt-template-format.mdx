@@ -18,7 +18,7 @@ LangSmith supports two prompt template formats, which work for different levels 
 
 [F-string syntax](#f-string-syntax) is ideal for straightforward prompts. [Mustache](#mustache-syntax) provides features for handling complex data structures and logic, which is helpful for evaluators and advanced use cases.
 
-You can switch between formats in the [UI](https://smith.langchain.com). LangSmith will automatically [convert your template](#conversion-between-formats) when possible, though some mustache features (like loops and conditionals) cannot be converted to f-string format.
+You can switch between formats in the [UI](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=langsmith-prompt-template-format). LangSmith will automatically [convert your template](#conversion-between-formats) when possible, though some mustache features (like loops and conditionals) cannot be converted to f-string format.
 
 <Callout icon="test-pipe" color="#4F46E5" iconType="regular">
 Use the [Playground](https://smith.langchain.com/playground) to test out the examples on this page. Switch the **Prompt format** under the prompt settings <Icon icon="settings" color="#4F46E5" iconType="solid" /> menu in the Playground.
@@ -575,7 +575,7 @@ Text: {{text}}
 Sentiment:
 ```
 
-When you enable few-shot examples in the [LangSmith UI](https://smith.langchain.com) (in evaluators or Prompt Hub), you configure the example format separately. LangSmith automatically injects those formatted examples wherever you place the `{{few_shot_examples}}` placeholder. This keeps your prompt template clean and lets you manage examples independently.
+When you enable few-shot examples in the [LangSmith UI](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=langsmith-prompt-template-format) (in evaluators or Prompt Hub), you configure the example format separately. LangSmith automatically injects those formatted examples wherever you place the `{{few_shot_examples}}` placeholder. This keeps your prompt template clean and lets you manage examples independently.
 
 **Example output with configured examples:**
 

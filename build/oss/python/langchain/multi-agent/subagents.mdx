@@ -4,6 +4,8 @@ title: Subagents
 
 In the **subagents** architecture, a central main [agent](/oss/python/langchain/agents) (often referred to as a **supervisor**) coordinates subagents by calling them as [tools](/oss/python/langchain/tools). The main agent decides which subagent to invoke, what input to provide, and how to combine results. Subagents are stateless—they don't remember past interactions, with all conversation memory maintained by the main agent. This provides [context](/oss/python/langchain/context-engineering) isolation: each subagent invocation works in a clean context window, preventing context bloat in the main conversation.
 
+For built-in subagent support, see [Deep Agents](/oss/python/deepagents/subagents).
+
 ```mermaid
 graph LR
     A[User] --> B[Main Agent]
@@ -50,7 +52,7 @@ from langchain.tools import tool
 from langchain.agents import create_agent
 
 # Create a subagent
-subagent = create_agent(model="google_genai:gemini-3.1-pro-preview", tools=[...])
+subagent = create_agent(model="google_genai:gemini-3.5-flash", tools=[...])
 
 # Wrap it as a tool
 @tool("research", description="Research a topic and return findings")
@@ -59,7 +61,7 @@ def call_research_agent(query: str):
     return result["messages"][-1].content
 
 # Main agent with subagent as a tool
-main_agent = create_agent(model="google_genai:gemini-3.1-pro-preview", tools=[call_research_agent])
+main_agent = create_agent(model="google_genai:gemini-3.5-flash", tools=[call_research_agent])
 ```
 
 
@@ -270,12 +272,12 @@ from langchain.agents import create_agent
 
 # Sub-agents developed by different teams
 research_agent = create_agent(
-    model="gpt-5.4",
+    model="gpt-5.5",
     prompt="You are a research specialist..."
 )
 
 writer_agent = create_agent(
-    model="gpt-5.4",
+    model="gpt-5.5",
     prompt="You are a writing specialist..."
 )
 
@@ -306,7 +308,7 @@ def task(
 
 # Main coordinator agent
 main_agent = create_agent(
-    model="gpt-5.4",
+    model="gpt-5.5",
     tools=[task],
     system_prompt=(
         "You coordinate specialized sub-agents. "

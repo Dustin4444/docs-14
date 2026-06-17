@@ -3,7 +3,11 @@ title: Graph API overview
 sidebarTitle: Graph API
 ---
 
-
+import GraphApiUsingTasksOriginalJs from '/snippets/code-samples/graph-api-using-tasks-original-js.mdx';
+import GraphApiUsingTasksOriginalPy from '/snippets/code-samples/graph-api-using-tasks-original-py.mdx';
+import GraphApiUsingTasksTaskJs from '/snippets/code-samples/graph-api-using-tasks-task-js.mdx';
+import GraphApiUsingTasksTaskPy from '/snippets/code-samples/graph-api-using-tasks-task-py.mdx';
+import LanggraphGraphApiResumeV2Py from '/snippets/code-samples/langgraph-graph-api-resume-v2-py.mdx';
 
 ## Graphs
 
@@ -191,6 +195,44 @@ There are two subtle and important points to note here:
 1. We pass `state` as the input schema to `node1`. But, we write out to `foo`, a channel in `OverallState`. How can we write out to a state channel that is not included in the input schema? This is because a node _can write to any state channel in the graph state._ The graph state is the union of the state channels defined at initialization, which includes `OverallState` and the filters `InputState` and `OutputState`.
 
 2. We initialize the graph with `StateGraph({ state: OverallState, input: InputState, output: OutputState })`. How can we write to `PrivateState` in `node2`? How does the graph gain access to this schema if it was not passed in the `StateGraph` initialization? We can do this because _nodes can also declare additional state channels_ as long as the state schema definition exists. In this case, the `PrivateState` schema is defined, so we can add `bar` as a new state channel in the graph and write to it.
+
+
+
+
+<Warning>
+**Private channels are not redacted when streaming.**
+
+Input, output, and private schemas constrain what each node _reads_ (its input schema) and what `invoke` _returns_ (the output schema). They do **not** hide channels from `stream`.
+
+When you stream with `streamMode: "values"`, the graph emits **all** of its state channels by default — including private ones — because values streaming defaults to the full set of state channels rather than the output schema. This is why a private channel like `bar` is hidden by `invoke` but visible while streaming:
+
+```typescript
+for await (const chunk of await graph.stream(
+  { userInput: "My" },
+  { streamMode: "values" }
+)) {
+  console.log(chunk);
+}
+// { userInput: 'My' }
+// { userInput: 'My', foo: 'My name' }
+// { userInput: 'My', foo: 'My name', bar: 'My name is' }            // <-- private channel
+// { userInput: 'My', foo: 'My name', bar: 'My name is', graphOutput: 'My name is Lance' }
+```
+
+To restrict the streamed values to a specific set of channels (e.g. only the output schema), pass `outputKeys`:
+
+```typescript
+for await (const chunk of await graph.stream(
+  { userInput: "My" },
+  { streamMode: "values", outputKeys: ["graphOutput"] }  // [!code highlight]
+)) {
+  console.log(chunk);
+}
+// { graphOutput: 'My name is Lance' }
+```
+
+If you only need the channels a node actually produced each step (rather than the full accumulated state), use `streamMode: "updates"` instead.
+</Warning>
 
 
 ### Reducers
@@ -492,7 +534,7 @@ const builder = new StateGraph(State)
 
 
 
-Behind the scenes, functions are converted to [`RunnableLambda`](https://reference.langchain.com/javascript/langchain-core/runnables/RunnableLambda), which add batch and async support to your function, along with [native tracing and debugging](/langsmith/home).
+Behind the scenes, functions are converted to [`RunnableLambda`](https://reference.langchain.com/javascript/langchain-core/runnables/RunnableLambda), which add batch and async support to your function, along with [native tracing and debugging](/langsmith/observability).
 
 If you add a node to a graph without specifying a name, it will be given a default name equivalent to the function name.
 
@@ -503,6 +545,36 @@ builder.addNode(myNode);
 // You can then create edges to/from this node by referencing it as `"myNode"`
 ```
 
+
+
+### Re-execution and idempotency
+
+
+
+When you compile with a [checkpointer](/oss/javascript/langgraph/persistence), LangGraph saves checkpoints at [super-step](#graphs) boundaries, not mid-function inside a node. If execution stops and later resumes (for example after an [interrupt](/oss/javascript/langgraph/interrupts) or a retry), the affected **node** runs again from the start of its function. Code and side effects before the pause run again.
+
+**Idempotency.** Design **node** logic so re-execution does not corrupt state. If a node inserts a database row, running it twice should not create duplicate rows unless that is intentional. Use idempotency keys, upserts, or read-before-write checks. For effects around `interrupt()`, see [Side effects called before `interrupt` must be idempotent](/oss/javascript/langgraph/interrupts#side-effects-called-before-interrupt-must-be-idempotent).
+
+**Graph changes.** [Determinism](/oss/javascript/langgraph/functional-api#determinism) rules about code changes do not apply to graph structure. You can add or remove **nodes** and edges without breaking resume for existing threads. Resumed runs use saved state and execute whatever graph you compile now.
+
+**Tasks and interrupts inside a node.** If a **node** calls [**tasks**](/oss/javascript/langgraph/functional-api#task) or [`interrupt`](https://reference.langchain.com/javascript/langchain-langgraph/index/interrupt), stricter determinism rules apply on resume. LangGraph restores completed **task** results from the checkpointer, but changing **task** or [`interrupt`](https://reference.langchain.com/javascript/langchain-langgraph/index/interrupt) order in code before the resume point can mismatch cached values. A [Functional API](/oss/javascript/langgraph/functional-api) **entrypoint** compiles to a single **node** that runs the whole entrypoint method this way. See [Determinism](/oss/javascript/langgraph/functional-api#determinism), [Idempotency](/oss/javascript/langgraph/functional-api#idempotency), and [Using tasks in nodes](#using-tasks-in-nodes).
+
+
+
+### Using tasks in nodes
+
+If a [node](#nodes) contains multiple operations, you may find it easier to implement each operation as a [**task**](/oss/javascript/langgraph/functional-api#task) instead of splitting the logic across multiple nodes. Task results are checkpointed when the graph uses a checkpointer, so resuming a thread can skip completed **task** work inside the node.
+
+
+
+<Tabs>
+    <Tab title="Original">
+    <GraphApiUsingTasksOriginalJs />
+    </Tab>
+    <Tab title="With task">
+    <GraphApiUsingTasksTaskJs />
+    </Tab>
+</Tabs>
 
 
 ### `START` node
@@ -945,7 +1017,7 @@ The current step counter is accessible in `config.metadata.langgraph_step` withi
 
 
 
-The step counter is stored in `config.metadata.langgraph_step`. The recursion limit check follows the logic: `step > stop` where `stop = step + recursionLimit + 1`. When the limit is exceeded, LangGraph raises a `GraphRecursionError`.
+The step counter is stored in `config.metadata.langgraph_step`. LangGraph increments this counter as the graph executes and raises a `GraphRecursionError` once the configured `recursionLimit` is exceeded.
 
 
 
@@ -1128,7 +1200,7 @@ It's often nice to be able to visualize graphs, especially as they get more comp
 
 ## Observability and Tracing
 
-To trace, debug and evaluate your agents, use [LangSmith](/langsmith/home).
+To trace, debug and evaluate your agents, use [LangSmith](/langsmith/observability).
 
 ## Learn more
 

@@ -3,7 +3,11 @@ title: Graph API overview
 sidebarTitle: Graph API
 ---
 
-
+import GraphApiUsingTasksOriginalJs from '/snippets/code-samples/graph-api-using-tasks-original-js.mdx';
+import GraphApiUsingTasksOriginalPy from '/snippets/code-samples/graph-api-using-tasks-original-py.mdx';
+import GraphApiUsingTasksTaskJs from '/snippets/code-samples/graph-api-using-tasks-task-js.mdx';
+import GraphApiUsingTasksTaskPy from '/snippets/code-samples/graph-api-using-tasks-task-py.mdx';
+import LanggraphGraphApiResumeV2Py from '/snippets/code-samples/langgraph-graph-api-resume-v2-py.mdx';
 
 ## Graphs
 
@@ -146,6 +150,40 @@ There are two subtle and important points to note here:
 
 
 
+<Warning>
+**Private channels are not redacted when streaming.**
+
+Input, output, and private schemas constrain what each node _reads_ (its input schema) and what `invoke` _returns_ (the output schema). They do **not** hide channels from `stream`.
+
+When you stream with `stream_mode="values"`, the graph emits **all** of its state channels by default, including private ones, because values streaming defaults to the full set of state channels rather than the output schema. This is why a private channel like `bar` is hidden by `invoke` but visible while streaming:
+
+```python
+for chunk in graph.stream({"user_input": "My"}, stream_mode="values"):
+    print(chunk)
+# {'user_input': 'My'}
+# {'user_input': 'My', 'foo': 'My name'}
+# {'user_input': 'My', 'foo': 'My name', 'bar': 'My name is'}        # <-- private channel
+# {'user_input': 'My', 'foo': 'My name', 'bar': 'My name is', 'graph_output': 'My name is Lance'}
+```
+
+To restrict the streamed values to a specific set of channels (e.g. only the output schema), pass `output_keys`:
+
+```python
+for chunk in graph.stream(
+    {"user_input": "My"},
+    stream_mode="values",
+    output_keys=["graph_output"],  # [!code highlight]
+):
+    print(chunk)
+# {'graph_output': 'My name is Lance'}
+```
+
+If you only need the channels a node actually produced each step (rather than the full accumulated state), use `stream_mode="updates"` instead.
+</Warning>
+
+
+
+
 ### Reducers
 
 Reducers are key to understanding how updates from nodes are applied to the `State`. Each key in the `State` has its own independent reducer function. If no reducer function is explicitly specified then it is assumed that all updates to that key should override it. There are a few different types of reducers, starting with the default type of reducer:
@@ -264,7 +302,7 @@ In LangGraph, nodes are Python functions (either synchronous or asynchronous) th
 
 1. `state`—The [state](#state) of the graph
 2. `config`—A [`RunnableConfig`](https://reference.langchain.com/python/langchain-core/runnables/config/RunnableConfig) object that contains configuration information like `thread_id` and tracing information like `tags`
-3. `runtime`—A `Runtime` object that contains [runtime `context`](#runtime-context) and other information like `store`, `stream_writer`, `execution_info`, and `server_info`
+3. `runtime`—A `Runtime` object that contains [runtime `context`](#runtime-context) and other information like `store`, `stream_writer`, `execution_info`, `server_info`, `heartbeat` (for idle timeout refresh), and `control` (for [graceful shutdown](/oss/python/langgraph/fault-tolerance#graceful-shutdown))
 
 Similar to `NetworkX`, you add these nodes to a graph using the [`add_node`](https://reference.langchain.com/python/langgraph/graph/state/StateGraph/add_node) method:
 
@@ -307,7 +345,7 @@ builder.add_node("node_with_execution_info", node_with_execution_info)
 
 
 
-Behind the scenes, functions are converted to [`RunnableLambda`](https://reference.langchain.com/python/langchain-core/runnables/base/RunnableLambda), which add batch and async support to your function, along with [native tracing and debugging](/langsmith/home).
+Behind the scenes, functions are converted to [`RunnableLambda`](https://reference.langchain.com/python/langchain-core/runnables/base/RunnableLambda), which add batch and async support to your function, along with [native tracing and debugging](/langsmith/observability).
 
 If you add a node to a graph without specifying a name, it will be given a default name equivalent to the function name.
 
@@ -316,6 +354,36 @@ builder.add_node(my_node)
 # You can then create edges to/from this node by referencing it as `"my_node"`
 ```
 
+
+
+
+
+### Re-execution and idempotency
+
+When you compile with a [checkpointer](/oss/python/langgraph/persistence), LangGraph saves checkpoints at [super-step](#graphs) boundaries, not mid-function inside a node. If execution stops and later resumes (for example after an [interrupt](/oss/python/langgraph/interrupts) or a [retry](/oss/python/langgraph/fault-tolerance#retries)), the affected **node** runs again from the start of its function. Code and side effects before the pause run again.
+
+**Idempotency.** Design **node** logic so re-execution does not corrupt state. If a node inserts a database row, running it twice should not create duplicate rows unless that is intentional. Use idempotency keys, upserts, or read-before-write checks. For effects around `interrupt()`, see [Side effects called before `interrupt` must be idempotent](/oss/python/langgraph/interrupts#side-effects-called-before-interrupt-must-be-idempotent).
+
+**Graph changes.** [Determinism](/oss/python/langgraph/functional-api#determinism) rules about code changes do not apply to graph structure. You can add or remove **nodes** and edges without breaking resume for existing threads. Resumed runs use saved state and execute whatever graph you compile now.
+
+**Tasks and interrupts inside a node.** If a **node** calls [**tasks**](/oss/python/langgraph/functional-api#task) or [`interrupt`](https://reference.langchain.com/python/langgraph/types/interrupt), stricter determinism rules apply on resume. LangGraph restores completed **task** results from the checkpointer, but changing **task** or [`interrupt`](https://reference.langchain.com/python/langgraph/types/interrupt) order in code before the resume point can mismatch cached values. A [Functional API](/oss/python/langgraph/functional-api) **entrypoint** compiles to a single **node** that runs the whole entrypoint method this way. See [Determinism](/oss/python/langgraph/functional-api#determinism), [Idempotency](/oss/python/langgraph/functional-api#idempotency), and [Using tasks in nodes](#using-tasks-in-nodes).
+
+
+
+
+
+### Using tasks in nodes
+
+If a [node](#nodes) contains multiple operations, you may find it easier to implement each operation as a [**task**](/oss/python/langgraph/functional-api#task) instead of splitting the logic across multiple nodes. Task results are checkpointed when the graph uses a checkpointer, so resuming a thread can skip completed **task** work inside the node.
+
+<Tabs>
+    <Tab title="Original">
+    <GraphApiUsingTasksOriginalPy />
+    </Tab>
+    <Tab title="With task">
+    <GraphApiUsingTasksTaskPy />
+    </Tab>
+</Tabs>
 
 
 
@@ -392,6 +460,17 @@ print(graph.invoke({"x": 5}, stream_mode='updates'))    # [!code highlight]
 print(graph.invoke({"x": 5}, stream_mode='updates'))    # [!code highlight]
 # [{'expensive_node': {'result': 10}, '__metadata__': {'cached': True}}]
 ```
+
+<Note>
+`set_entry_point(node)` defines the first node the graph will execute.
+It is equivalent to `builder.add_edge(START, node)`.
+
+`set_finish_point(node)` defines the last node in the graph.
+It is equivalent to `builder.add_edge(node, END)`.
+
+Both methods are valid but `add_edge(START, ...)` and `add_edge(..., END)`
+are the recommended modern syntax.
+</Note>
 
 1. First run takes two seconds to run (due to mocked expensive computation).
 2. Second run utilizes cache and returns quickly.
@@ -622,20 +701,7 @@ graph.invoke( {  # [!code ++]
 
 Use `Command(resume=...)` to provide a value and resume graph execution after an [interrupt](/oss/python/langgraph/interrupts). The value passed to `resume` becomes the return value of the `interrupt()` call inside the paused node:
 
-```python
-from langgraph.types import Command, interrupt
-
-def human_review(state: State):
-    # Pauses the graph and waits for a value
-    answer = interrupt("Do you approve?")
-    return {"messages": [{"role": "user", "content": answer}]}
-
-# First invocation - hits the interrupt and pauses
-result = graph.invoke({"messages": [...]}, config)
-
-# Resume with a value - the interrupt() call returns "yes"
-result = graph.invoke(Command(resume="yes"), config)
-```
+<LanggraphGraphApiResumeV2Py />
 
 Check out the [interrupts conceptual guide](/oss/python/langgraph/interrupts) for full details on interrupt patterns, including multiple interrupts and validation loops.
 
@@ -730,7 +796,7 @@ The current step counter is accessible in `config["metadata"]["langgraph_step"]`
 
 #### How it works
 
-The step counter is stored in `config["metadata"]["langgraph_step"]`. The recursion limit check follows the logic: `step > stop` where `stop = step + recursion_limit + 1`. When the limit is exceeded, LangGraph raises a `GraphRecursionError`.
+The step counter is stored in `config["metadata"]["langgraph_step"]`. LangGraph increments this counter as the graph executes and raises a `GraphRecursionError` once the configured `recursion_limit` is exceeded.
 
 
 
@@ -912,7 +978,7 @@ It's often nice to be able to visualize graphs, especially as they get more comp
 
 ## Observability and Tracing
 
-To trace, debug and evaluate your agents, use [LangSmith](/langsmith/home).
+To trace, debug and evaluate your agents, use [LangSmith](/langsmith/observability).
 
 ## Learn more
 

@@ -63,7 +63,7 @@ async_subagents = [
 ]
 
 agent = create_deep_agent(
-    model="google_genai:gemini-3.1-pro-preview",
+    model="google_genai:gemini-3.5-flash",
     subagents=async_subagents,
 )
 ```
@@ -93,7 +93,7 @@ For LangGraph-based deployments, register all graphs in the same `langgraph.json
 
 ## Use the async subagent tools
 
-The [`AsyncSubAgentMiddleware`](https://reference.langchain.com/python/deepagents/middleware/async_subagents/AsyncSubAgentMiddleware) gives the supervisor five tools:
+The [`AsyncSubAgentMiddleware`](https://reference.langchain.com/python/deepagents/middleware/async_subagents/AsyncSubAgentMiddleware) which is included in the [default middleware stack](/oss/python/deepagents/customization#default-stack-main-agent) when async subagents are configured, gives the supervisor five tools:
 
 | Tool | Purpose | Returns |
 |------|---------|---------|
@@ -186,10 +186,6 @@ Supervisor on one server, subagents on another via HTTP transport. Use when suba
 
 ### Hybrid
 
-In a split deployment, you have the supervisor on one server and subagents on another via HTTP transport. Use when subagents need different compute profiles or independent scaling.
-
-### Hybrid
-
 In a hybrid deployment, some subagents are co-deployed via ASGI, others remote via HTTP:
 
 ```python
@@ -260,7 +256,7 @@ When using LangGraph-based deployments, every async subagent run is a standard L
 
 ```python
 agent = create_deep_agent(
-    model="google_genai:gemini-3.1-pro-preview",
+    model="google_genai:gemini-3.5-flash",
     system_prompt="""...your instructions...
 
     After launching an async subagent, ALWAYS return control to the user.

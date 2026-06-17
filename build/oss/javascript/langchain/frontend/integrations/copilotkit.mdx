@@ -1,9 +1,11 @@
 ---
 title: CopilotKit
-description: Add a custom CopilotKit endpoint to a LangGraph deployment and render structured generative UI in React
+description: Use CopilotKit with LangGraph, Deep Agents, and React with custom endpoints, the Python AG-UI bridge, and structured generative UI
 ---
 
 [CopilotKit](https://www.copilotkit.ai/) provides a full React chat runtime and pairs especially well with LangGraph when you want the agent to return **structured UI payloads** instead of only plain text. In this pattern, your LangGraph deployment serves both the graph API and a custom CopilotKit endpoint, while the frontend parses assistant messages into dynamic React components.
+
+On the server, the [copilotkit](https://pypi.org/project/copilotkit/) package provides [`CopilotKitMiddleware`](https://docs.copilotkit.ai) so a LangGraph graph, a LangChain agent, or a [Deep Agent](/oss/javascript/deepagents/overview) can speak the [Agent UI (AG-UI)](https://docs.ag-ui.com/) wire protocol, stream tool and message events to a chat UI, and read or write the shared **CopilotKit** slice of state, with helpers to mount a CopilotKit-compatible HTTP endpoint in front of your graph.
 
 This approach is useful when you want:
 
@@ -11,9 +13,12 @@ This approach is useful when you want:
 - a custom server endpoint that can add provider-specific behavior next to your deployed graph
 - structured generative UI rendered from a constrained component registry
 
+[CopilotKit for LangGraph](https://docs.copilotkit.ai/langgraph) also documents [generative UI](https://docs.copilotkit.ai/langgraph/generative-ui), [human in the loop](https://docs.copilotkit.ai/langgraph/human-in-the-loop) (HITL), and [shared state](https://docs.copilotkit.ai/langgraph/shared-state) on top of the same middleware and clients.
+
 <Info>
   For CopilotKit-specific APIs, UI patterns, and runtime configuration, see the
-  [CopilotKit docs](https://docs.copilotkit.ai/langgraph).
+  [CopilotKit docs](https://docs.copilotkit.ai/langgraph). For a Deep Agent walkthrough, see
+  [Deep Agents and CopilotKit](https://docs.copilotkit.ai/langgraph/deep-agents) in the CopilotKit docs.
 </Info>
 
 import { ExampleEmbed } from "/snippets/example-embed.jsx"
@@ -53,6 +58,8 @@ graph LR
   UI --> RENDER
 ```
 
+
+
 ## Installation
 
 For the backend endpoint:
@@ -69,6 +76,8 @@ For the frontend app:
 ```bash
 bun add @copilotkit/react-core @copilotkit/react-ui @hashbrownai/core @hashbrownai/react
 ```
+
+
 
 ## Extend the LangGraph deployment with a custom endpoint
 
@@ -221,7 +230,7 @@ const structuredOutputMiddleware = createMiddleware({
 });
 
 export const agent = createAgent({
-  model: process.env.COPILOTKIT_MODEL ?? "google_genai:gemini-3.1-pro-preview",
+  model: process.env.COPILOTKIT_MODEL ?? "google_genai:gemini-3.5-flash",
   contextSchema,
   middleware: [structuredOutputMiddleware],
   tools: [searchWebTool, deepSearchTool],
@@ -291,6 +300,10 @@ The result is a clean separation of concerns:
 - LangGraph still owns graph execution and persistence
 - CopilotKit owns the chat-facing runtime contract
 - your custom endpoint glues them together inside one deployment
+
+
+Follow the CopilotKit documentation for [LangGraphHttpAgent](https://docs.copilotkit.ai/langgraph) or `LangGraphAgent` in the Node **CopilotRuntime**; the **Python** graph and middleware still define tool behavior and agent logic.
+:::
 
 ## Structure the frontend app
 
@@ -444,6 +457,12 @@ This renderer pattern is what makes the integration feel native:
 - CopilotKit handles chat state and transport
 - the custom renderer decides how assistant payloads become UI
 - [Hashbrown](https://hashbrown.dev/) turns validated structured data into concrete React elements
+
+## Resources
+
+- [Deep Agents and CopilotKit](https://docs.copilotkit.ai/langgraph/deep-agents) in the CopilotKit documentation — end-to-end Next.js, dev server, and **Deep Agent** path
+- [CopilotKit: LangGraph features](https://docs.copilotkit.ai/langgraph) — generative UI, HITL, shared state
+- [LangGraph deployment](/oss/javascript/langgraph/deploy) — production and dev server
 
 ## Best practices
 

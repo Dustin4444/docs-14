@@ -65,7 +65,7 @@ const asyncSubagents: AsyncSubAgent[] = [
 ];
 
 const agent = createDeepAgent({
-  model: "google_genai:gemini-3.1-pro-preview",
+  model: "google_genai:gemini-3.5-flash",
   subagents: [...asyncSubagents],
 });
 ```
@@ -93,7 +93,7 @@ For LangGraph-based deployments, register all graphs in the same `langgraph.json
 
 ## Use the async subagent tools
 
-The [`AsyncSubAgentMiddleware`](https://reference.langchain.com/javascript/deepagents/agent/createDeepAgent) gives the supervisor five tools:
+The [`AsyncSubAgentMiddleware`](https://reference.langchain.com/javascript/deepagents/agent/createDeepAgent) which is included in the [default middleware stack](/oss/javascript/deepagents/customization#default-stack-main-agent) when async subagents are configured, gives the supervisor five tools:
 
 | Tool | Purpose | Returns |
 |------|---------|---------|
@@ -186,10 +186,6 @@ Supervisor on one server, subagents on another via HTTP transport. Use when suba
 
 ### Hybrid
 
-In a split deployment, you have the supervisor on one server and subagents on another via HTTP transport. Use when subagents need different compute profiles or independent scaling.
-
-### Hybrid
-
 In a hybrid deployment, some subagents are co-deployed via ASGI, others remote via HTTP:
 
 
@@ -262,7 +258,7 @@ When using LangGraph-based deployments, every async subagent run is a standard L
 
 ```typescript
 const agent = createDeepAgent({
-  model: "google_genai:gemini-3.1-pro-preview",
+  model: "google_genai:gemini-3.5-flash",
   systemPrompt: `...your instructions...
 
     After launching an async subagent, ALWAYS return control to the user.

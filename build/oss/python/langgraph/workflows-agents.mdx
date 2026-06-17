@@ -3,8 +3,6 @@ title: Workflows and agents
 sidebarTitle: Workflows + agents
 ---
 
-
-
 This guide reviews common workflow and agent patterns.
 
 - Workflows have predetermined code paths and are designed to operate in a certain order.
@@ -13,6 +11,10 @@ This guide reviews common workflow and agent patterns.
 ![Agent Workflow](/oss/images/agent_workflow.png)
 
 LangGraph offers several benefits when building agents and workflows, including [persistence](/oss/python/langgraph/persistence), [streaming](/oss/python/langgraph/streaming), and support for debugging as well as [deployment](/oss/python/langgraph/deploy).
+
+<Tip>
+Trace and compare these workflow patterns with [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langgraph-workflows-agents). Follow the [tracing quickstart](/langsmith/trace-with-langgraph) to see how data flows through each step. We recommend you also set up [LangSmith Engine](/langsmith/engine) which monitors your traces, detects issues, and proposes fixes.
+</Tip>
 
 ## Setup
 
@@ -1008,7 +1010,7 @@ def llm_call(state: MessagesState):
     }
 
 
-def tool_node(state: dict):
+def tool_node(state: MessagesState):
     """Performs the tool call"""
 
     result = []
@@ -1118,6 +1120,36 @@ for chunk in agent.stream(messages, stream_mode="updates"):
     print("\n")
 ```
 </CodeGroup>
+
+
+
+
+### ToolNode
+
+[`ToolNode`](https://reference.langchain.com/python/langgraph/agents/#langgraph.prebuilt.tool_node.ToolNode) is a prebuilt node that executes tools in LangGraph workflows. It handles parallel tool execution, error handling, and state injection automatically.
+
+Use [`ToolNode`](https://reference.langchain.com/python/langgraph/agents/#langgraph.prebuilt.tool_node.ToolNode) when you need fine-grained control over how your graph executes tools. This is the building block that powers tool execution in many LangGraph agent patterns.
+
+```python
+from langchain.tools import tool
+from langgraph.prebuilt import ToolNode
+from langgraph.graph import MessagesState, StateGraph
+
+@tool
+def search(query: str) -> str:
+    """Search for information."""
+    return f"Results for: {query}"
+
+@tool
+def calculator(expression: str) -> str:
+    """Evaluate a math expression."""
+    return str(eval(expression))
+
+builder = StateGraph(MessagesState)
+builder.add_node("tools", ToolNode([search, calculator]))
+# ... add other nodes and edges
+graph = builder.compile()
+```
 
 ---
 

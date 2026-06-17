@@ -15,7 +15,7 @@ In this quickstart, you’ll create, test, and improve prompts using either the 
 
 Before you begin, make sure you have:
 
-- **A LangSmith account**: Sign up or log in at [smith.langchain.com](https://smith.langchain.com).
+- **A LangSmith account**: Sign up or log in at [smith.langchain.com](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=langsmith-prompt-engineering-quickstart).
 - **A LangSmith API key**: Follow the [Create an API key](/langsmith/create-account-api-key) guide.
 - **An OpenAI API key**: Generate this from the [OpenAI dashboard](https://platform.openai.com/account/api-keys).
 
@@ -30,7 +30,7 @@ Select the tab for UI or SDK workflows:
 
 ## 2. Create a prompt
 
-1. In the [LangSmith UI](https://smith.langchain.com), navigate to the **Prompts** section in the left-hand menu.
+1. In the [LangSmith UI](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=langsmith-prompt-engineering-quickstart), navigate to the **Prompts** section in the left-hand menu.
 1. Click on **+ Prompt** to create a prompt.
 1. Modify the prompt by editing or adding prompts and input variables as needed.
 
@@ -203,7 +203,7 @@ Follow the resulting link to view the newly created Prompt Hub prompt in the Lan
 
 In this step, you'll pull the prompt you created in [step 2](#2-create-a-prompt) by name (`"prompt-quickstart"`), format it with a test input, convert it to OpenAI’s chat format, and call the OpenAI Chat Completions API.
 
-Then, you'll iterate on the prompt by creating a new version. Members of your workspace can open an existing prompt, experiment with changes in the [UI](https://smith.langchain.com), and save those changes as a new commit on the same prompt, which preserves history for the whole team.
+Then, you'll iterate on the prompt by creating a new version. Members of your workspace can open an existing prompt, experiment with changes in the [UI](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=langsmith-prompt-engineering-quickstart), and save those changes as a new commit on the same prompt, which preserves history for the whole team.
 
 1. Add the following to a `test_prompt` file:
 
@@ -224,7 +224,7 @@ Then, you'll iterate on the prompt by creating a new version. Members of your wo
     formatted_prompt = prompt.invoke({"question": "What is the color of the sky?"})
 
     response = oai_client.chat.completions.create(
-        model="gpt-5.4",
+        model="gpt-5.5",
         messages=convert_to_openai_messages(formatted_prompt.messages),
     )
     ```
@@ -242,7 +242,7 @@ Then, you'll iterate on the prompt by creating a new version. Members of your wo
     const formattedPrompt = await prompt.invoke({ question: "What is the color of the sky?" });
 
     const response = await oaiClient.chat.completions.create({
-        model: "gpt-5.4",
+        model: "gpt-5.5",
         messages: convertPromptToOpenAI(formattedPrompt).messages,
     });
     ```
@@ -334,7 +334,7 @@ To improve your prompts:
 - Learn how to test your prompt's performance over a dataset instead of individual examples, refer to [Run an evaluation from the Playground](/langsmith/run-evaluation-from-playground).
 
 <Callout type="info" icon="feather">
-Use **[Polly](/langsmith/polly)** in the Playground to help optimize your prompts, generate tools, and create output schemas.
+Use the **[Chat](/langsmith/chat)** in the Playground to help optimize your prompts, generate tools, and create output schemas.
 </Callout>
 
 ---

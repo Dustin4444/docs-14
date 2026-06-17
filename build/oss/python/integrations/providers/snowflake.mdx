@@ -17,11 +17,11 @@ You can use these models via the
 
 <CodeGroup>
 ```bash pip
-pip install langchain-community sentence-transformers
+pip install sentence-transformers
 ```
 
 ```bash uv
-uv add langchain-community sentence-transformers
+uv add sentence-transformers
 ```
 </CodeGroup>
 
@@ -29,15 +29,6 @@ uv add langchain-community sentence-transformers
 from langchain_huggingface import HuggingFaceEmbeddings
 
 model = HuggingFaceEmbeddings(model_name="snowflake/arctic-embed-m-v1.5")
-```
-
-## Document loader
-
-You can use the [`SnowflakeLoader`](/oss/python/integrations/document_loaders/snowflake)
-to load data from Snowflake:
-
-```python
-from langchain_community.document_loaders import SnowflakeLoader
 ```
 
 ---

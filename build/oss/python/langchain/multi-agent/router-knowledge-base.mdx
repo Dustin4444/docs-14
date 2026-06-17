@@ -83,7 +83,7 @@ For more details, see our [Installation guide](/oss/python/langchain/install).
 
 ### LangSmith
 
-Set up [LangSmith](https://smith.langchain.com) to inspect what is happening inside your agent. Then set the following environment variables:
+Set up [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-multi-agent-router-knowledge-base) to inspect what is happening inside your agent. Then set the following environment variables:
 
 <CodeGroup>
 ```bash bash
@@ -214,7 +214,7 @@ Create an agent for each vertical. Each agent has domain-specific tools and a pr
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 
-model = init_chat_model("openai:gpt-5.4")
+model = init_chat_model("openai:gpt-5.5")
 
 github_agent = create_agent(
     model,
@@ -600,7 +600,7 @@ def get_thread(thread_id: str) -> str:
 
 
 # Models and agents
-model = init_chat_model("openai:gpt-5.4")
+model = init_chat_model("openai:gpt-5.5")
 router_llm = init_chat_model("openai:gpt-5.4-mini")
 
 github_agent = create_agent(
@@ -846,7 +846,7 @@ For simpler cases with dynamic tool selection, consider the [subagents pattern](
 - Learn about [handoffs](/oss/python/langchain/multi-agent/handoffs) for agent-to-agent conversations
 - Explore the [subagents pattern](/oss/python/langchain/multi-agent/subagents-personal-assistant) for centralized orchestration
 - Read the [multi-agent overview](/oss/python/langchain/multi-agent) to compare different patterns
-- Use [LangSmith](https://smith.langchain.com) to debug and monitor your router
+- Use [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-multi-agent-router-knowledge-base) to debug and monitor your router
 
 ---
 

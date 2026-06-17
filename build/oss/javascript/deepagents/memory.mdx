@@ -66,7 +66,6 @@ Populate the store with initial memories, then invoke the agent across two threa
 
 
 ```typescript
-import { v4 as uuidv4 } from "uuid";
 import { createDeepAgent, CompositeBackend, StateBackend, StoreBackend, createFileData } from "deepagents";
 import { InMemoryStore } from "@langchain/langgraph";
 
@@ -115,13 +114,13 @@ const agent = createDeepAgent({
 });
 
 // Thread 1: the agent learns a new preference and saves it to memory
-const config1 = { configurable: { thread_id: uuidv4() } };
+const config1 = { configurable: { thread_id: crypto.randomUUID() } };
 await agent.invoke({
   messages: [{ role: "user", content: "I prefer detailed explanations. Remember that." }],
 }, config1);
 
 // Thread 2: the agent reads memory and applies the preference
-const config2 = { configurable: { thread_id: uuidv4() } };
+const config2 = { configurable: { thread_id: crypto.randomUUID() } };
 await agent.invoke({
   messages: [{ role: "user", content: "Explain how transformers work." }],
 }, config2);
@@ -166,7 +165,6 @@ Seed per-user memories and invoke the agent as two different users. Each user se
 
 
 ```typescript
-import { v4 as uuidv4 } from "uuid";
 import { createDeepAgent, CompositeBackend, StateBackend, StoreBackend, createFileData } from "deepagents";
 import { InMemoryStore } from "@langchain/langgraph";
 
@@ -227,7 +225,7 @@ const agent = createDeepAgent({
 // automatically see only their own preferences.
 await agent.invoke(
   { messages: [{ role: "user", content: "How do I read a CSV file?" }] },
-  { configurable: { thread_id: uuidv4() } },
+  { configurable: { thread_id: crypto.randomUUID() } },
 );
 ```
 
@@ -251,7 +249,7 @@ On top of the basic configuration options for memory paths and scope, you can al
 
 Episodic memory stores records of past experiences: what happened, in what order, and what the outcome was. Unlike semantic memory (facts and preferences stored in files like `AGENTS.md`), episodic memory preserves the full conversational context so the agent can recall *how* a problem was solved, not just *what* was learned from it.
 
-Deep Agents already use [checkpointers](/oss/javascript/langgraph/persistence#checkpoints) which is the mechanism that supports episodic memory: every conversation is persisted as a checkpointed thread.
+Deep Agents already use [checkpointers](/oss/javascript/langgraph/checkpointers#checkpoints) which is the mechanism that supports episodic memory: every conversation is persisted as a checkpointed thread.
 
 To make past conversations searchable, wrap thread search in a tool. The `user_id` is pulled from the runtime context rather than passed as a parameter:
 
@@ -410,7 +408,7 @@ const searchRecentConversations = tool(
 );
 
 const agent = createDeepAgent({
-  model: "google_genai:gemini-3.1-pro-preview",
+  model: "google_genai:gemini-3.5-flash",
   systemPrompt: `Review recent conversations and update the user's memory file.
 Merge new facts, remove outdated information, and keep it concise.`,
   tools: [searchRecentConversations],

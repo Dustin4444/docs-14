@@ -79,7 +79,7 @@ For more details, see our [Installation guide](/oss/javascript/langchain/install
 
 ### LangSmith
 
-Set up [LangSmith](https://smith.langchain.com) to inspect what is happening inside your agent. Then set the following environment variables:
+Set up [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-multi-agent-handoffs-customer-support) to inspect what is happening inside your agent. Then set the following environment variables:
 
 
 
@@ -646,7 +646,6 @@ Here's everything together in a runnable script:
 import { createMiddleware, createAgent } from "langchain";
 
 import { z } from "zod";
-import { v4 as uuidv4 } from "uuid";
 import { tool, ToolMessage, type ToolRuntime, HumanMessage } from "langchain";
 import { Command, MemorySaver, StateSchema } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
@@ -857,7 +856,7 @@ const agent = createAgent({
 });
 
 // Configuration for this conversation thread
-const threadId = uuidv4();
+const threadId = crypto.randomUUID();
 const config = { configurable: { thread_id: threadId } };
 
 // Turn 1: Initial message - starts with warranty_collector step
@@ -914,7 +913,7 @@ for (const msg of result.messages) {
 - Learn about the [subagents pattern](/oss/javascript/langchain/multi-agent/subagents-personal-assistant) for centralized orchestration
 - Explore [middleware](/oss/javascript/langchain/middleware) for more dynamic behaviors
 - Read the [multi-agent overview](/oss/javascript/langchain/multi-agent) to compare patterns
-- Use [LangSmith](https://smith.langchain.com) to debug and monitor your multi-agent system
+- Use [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-multi-agent-handoffs-customer-support) to debug and monitor your multi-agent system
 
 ---
 

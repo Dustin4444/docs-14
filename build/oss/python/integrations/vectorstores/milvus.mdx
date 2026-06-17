@@ -106,7 +106,7 @@ Database 'milvus_demo' created successfully.
 
 Note the change in the URI below. Once the instance is initialized, navigate to [127.0.0.1:9091/webui](http://127.0.0.1:9091/webui) to view the local web UI.
 
-Here is an example of how you create your vector store instance with the Milvus database serivce:
+Here is an example of how you create your vector store instance with the Milvus database service:
 
 ```python
 from langchain_milvus import BM25BuiltInFunction, Milvus
@@ -351,9 +351,9 @@ vectorstore.similarity_search(
 
 For guides on how to use this vector store for retrieval-augmented generation (RAG), see the following sections:
 
-- [Tutorials](/oss/python/langchain/rag)
-- [How-to: Question and answer with RAG](https://python.langchain.com/docs/how_to/#qa-with-rag)
-- [Retrieval conceptual docs](https://python.langchain.com/docs/concepts/retrieval)
+- [Retrieval docs](/oss/python/langchain/retrieval)
+- [Build a RAG app with LangChain](/oss/python/langchain/rag)
+- [Agentic RAG](/oss/python/langgraph/agentic-rag)
 
 ### Per-User retrieval
 
@@ -414,7 +414,7 @@ vectorstore.as_retriever(search_kwargs={"expr": 'namespace == "harrison"'}).invo
 
 ## API reference
 
-For detailed documentation of all Milvus VectorStore features and configurations head to the [API reference]nce.langchain.com/python/langchain-milvus/vectorstores/milvus/Milvus)
+For detailed documentation of all `Milvus` VectorStore features and configurations head to the [API reference](https://reference.langchain.com/python/langchain-milvus/vectorstores/milvus/Milvus).
 
 ---
 

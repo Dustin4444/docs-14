@@ -3,6 +3,8 @@ title: Subgraphs
 sidebarTitle: Subgraphs
 ---
 
+import LanggraphSubgraphsInterruptV2Py from '/snippets/code-samples/langgraph-subgraphs-interrupt-v2-py.mdx';
+
 This guide explains the mechanics of using subgraphs. A subgraph is a [graph](/oss/javascript/langgraph/graph-api#graphs) that is used as a [node](/oss/javascript/langgraph/graph-api#nodes) in another graph.
 
 Subgraphs are useful for:
@@ -21,7 +23,7 @@ npm install @langchain/langgraph
 
 <Tip>
 **Set up LangSmith for LangGraph development**
-Sign up for [LangSmith](https://smith.langchain.com) to quickly spot issues and improve the performance of your LangGraph projects. LangSmith lets you use trace data to debug, test, and monitor your LLM apps built with LangGraph—read more about [how to get started with LangSmith](https://docs.smith.langchain.com).
+Sign up for [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langgraph-use-subgraphs) to quickly spot issues and improve the performance of your LangGraph projects. LangSmith lets you use trace data to debug, test, and monitor your LLM apps built with LangGraph—read more about [how to get started with LangSmith](https://docs.smith.langchain.com).
 </Tip>
 
 
@@ -341,7 +343,7 @@ The `checkpointer` parameter on `.compile()` controls subgraph persistence:
 
 | Mode | `checkpointer=` | Behavior |
 |------|-----------------|----------|
-| [Per-invocation](#per-invocation-default) | `None` (default) | Each call starts fresh and inherits the parent's checkpointer to support [interrupts](/oss/javascript/langgraph/interrupts) and [durable execution](/oss/javascript/langgraph/durable-execution) within a single call. |
+| [Per-invocation](#per-invocation-default) | `None` (default) | Each call starts fresh and inherits the parent's checkpointer to support [interrupts](/oss/javascript/langgraph/interrupts) and [durable execution](/oss/javascript/langgraph/persistence) within a single call. |
 | [Per-thread](#per-thread) | `True` | State accumulates across calls on the same thread. Each call picks up where the last one left off. |
 | [Stateless](#stateless) | `False` | No checkpointing at all—runs like a plain function call. No interrupts or durable execution. |
 
@@ -357,12 +359,12 @@ The examples below use LangChain's [`create_agent`](https://reference.langchain.
 
 ### Stateful
 
-Stateful subgraphs inherit the parent graph's checkpointer, which enables [interrupts](/oss/javascript/langgraph/interrupts), [durable execution](/oss/javascript/langgraph/durable-execution), and state inspection. The two stateful modes differ in how long state is retained.
+Stateful subgraphs inherit the parent graph's checkpointer, which enables [interrupts](/oss/javascript/langgraph/interrupts), [persistence](/oss/javascript/langgraph/persistence), and state inspection. The two stateful modes differ in how long state is retained.
 
 #### Per-invocation (default)
 
 <Tip>
-This is the recommended mode for most applications, including [multi-agent](/oss/javascript/langchain/multi-agent) systems where subagents are invoked as tools. It supports interrupts, [durable execution](/oss/javascript/langgraph/durable-execution), and parallel calls while keeping each invocation isolated.
+This is the recommended mode for most applications, including [multi-agent](/oss/javascript/langchain/multi-agent) systems where subagents are invoked as tools. It supports [interrupts](/oss/javascript/langgraph/interrupts), [persistence](/oss/javascript/langgraph/persistence), and parallel calls while keeping each invocation isolated.
 </Tip>
 
 Use per-invocation persistence when each call to the subgraph is independent and the subagent doesn't need to remember anything from previous calls. This is the most common pattern, especially for [multi-agent](/oss/javascript/langchain/multi-agent) systems where subagents handle one-off requests like "look up this customer's order" or "summarize this document."
@@ -726,7 +728,7 @@ const subgraph = builder.compile({ checkpointer: false });  // or true, or null
 | State inspection | <Tooltip tip="State inspection with per-invocation persistence is available for the current invocation only (while interrupted). Each invocation starts fresh, so there is no accumulated state to inspect after the invocation completes.">⚠️</Tooltip> | ✅ | ❌ |
 
 - **Interrupts (HITL)**: The subgraph can use [interrupt()](/oss/javascript/langgraph/interrupts) to pause execution and wait for user input, then resume where it left off.
-- **Multi-turn memory**: The subgraph retains its state across multiple invocations within the same [thread](/oss/javascript/langgraph/persistence#threads). Each call picks up where the last one left off rather than starting fresh.
+- **Multi-turn memory**: The subgraph retains its state across multiple invocations within the same [thread](/oss/javascript/langgraph/checkpointers#threads). Each call picks up where the last one left off rather than starting fresh.
 - **Multiple calls (different subgraphs)**: Multiple different subgraph instances can be invoked within a single node without checkpoint namespace conflicts.
 - **Multiple calls (same subgraph)**: The same subgraph instance can be invoked multiple times within a single node. With stateful persistence, these calls write to the same checkpoint namespace and conflict—use per-invocation persistence instead.
 - **State inspection**: The subgraph's state is available via `get_state(config, subgraphs=True)` for debugging and monitoring.
@@ -819,7 +821,7 @@ Viewing subgraph state requires that LangGraph can **statically discover** the s
 
 ## Stream subgraph outputs
 
-To include outputs from subgraphs in the streamed outputs, you can set the subgraphs option in the stream method of the parent graph. This will stream outputs from both the parent graph and any subgraphs.
+To observe nested graph executions, we recommend [event streaming](/oss/javascript/langgraph/event-streaming): the `stream.subgraphs` projection discovers each nested run and exposes its `path`, `messages`, and `values` without parsing namespace strings.
 
 
 

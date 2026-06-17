@@ -37,7 +37,7 @@ However, complex graphs may hit the default limit naturally.
 * If you have a complex graph, you can pass in a higher `recursionLimit` value into your `config` object when invoking your graph like this:
 
 ```typescript
-await graph.invoke({...}, { recursionLimit: 100 });
+await graph.invoke({...}, { recursionLimit: 1000 });
 ```
 
 ---

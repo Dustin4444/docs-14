@@ -52,7 +52,7 @@ ASTRA_DB_APPLICATION_TOKEN =  ········
 (optional) ASTRA_DB_KEYSPACE =
 ```
 
-If you want to get best in-class automated tracing of your model calls you can also set your [LangSmith](/langsmith/home) API key by uncommenting below:
+If you want to get best in-class automated tracing of your model calls you can also set your [LangSmith](/langsmith/observability) API key by uncommenting below:
 
 ```python
 os.environ["LANGSMITH_API_KEY"] = getpass.getpass("Enter your LangSmith API key: ")
@@ -81,7 +81,7 @@ Astra DB vector stores support metadata search in vector searches; furthermore, 
 
 #### Additional information
 
-The `AstraDBVectorStore` can be configured in many ways; see the [API Reference](https://reference.langchain.com/python/langchain-astradb/vectorstores/AstraDBVectorStore) for a full guide covering e.g. asynchronous initialization; non-Astra-DB databases; custom indexing allow-/deny-lists; manual hybrid-search control; and much more.
+The `AstraDBVectorStore` can be configured in many ways; see the [API reference](https://reference.langchain.com/python/langchain-astradb/vectorstores/AstraDBVectorStore) for a full guide covering e.g. asynchronous initialization; non-Astra-DB databases; custom indexing allow-/deny-lists; manual hybrid-search control; and much more.
 
 ### Explicit embedding initialization (method 1)
 
@@ -376,9 +376,9 @@ retriever.invoke("Stealing from the bank is a crime", filter={"source": "news"})
 
 For guides on how to use this vector store for retrieval-augmented generation (RAG), see the following sections:
 
-- [Tutorials](/oss/python/langchain/rag)
-- [How-to: Question and answer with RAG](https://python.langchain.com/docs/how_to/#qa-with-rag)
-- [Retrieval conceptual docs](https://python.langchain.com/docs/concepts/retrieval)
+- [Retrieval docs](/oss/python/langchain/retrieval)
+- [Build a RAG app with LangChain](/oss/python/langchain/rag)
+- [Agentic RAG](/oss/python/langgraph/agentic-rag)
 
 For more, check out the [complete RAG template using Astra DB](https://github.com/langchain-ai/langchain/tree/master/templates/rag-astradb).
 

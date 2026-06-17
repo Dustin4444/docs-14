@@ -1,0 +1,121 @@
+---
+title: Build a data analysis agent from scratch
+sidebarTitle: Deep Agent
+description: Build a data analysis agent step by step using create_agent and deepagents middleware.
+---
+
+This guide builds a data analysis agent from first principles using `create_agent` and deepagents middleware. Rather than starting with `create_deep_agent`, we assemble the harness one piece at a time: so you can see exactly what each component adds and swap in only what your use case needs.
+
+The agent we'll build:
+1. Accepts a CSV file for analysis
+2. Writes and executes Python code in an isolated sandbox
+3. Delegates visualization work to a specialized subagent
+4. Loads data analysis patterns from a skills file
+
+## Setup
+
+
+
+Enable LangSmith tracing to inspect every step:
+
+```bash
+export LANGSMITH_TRACING=true
+export LANGSMITH_API_KEY=...
+```
+
+---
+
+## Step 1: The minimal agent
+
+A model, a loop. Nothing else yet.
+
+
+
+This runs, but the agent has no filesystem and no way to execute code. The next steps add those.
+
+---
+
+## Step 2: Add a sandbox backend
+
+`LangSmithSandbox` gives the agent an isolated environment with a filesystem and an `execute` tool for running shell commands. The agent can install packages, write scripts, and run them: without touching the host.
+
+
+
+[`FilesystemMiddleware`](https://reference.langchain.com/javascript/deepagents/middleware/createFilesystemMiddleware) adds `read_file`, `write_file`, `edit_file`, `glob`, and `grep`. Because `LangSmithSandbox` implements the sandbox protocol, it also adds `execute`: the agent can now run shell commands.
+
+Upload a CSV and invoke:
+
+
+
+---
+
+## Step 3: Add context management
+
+For longer analysis sessions the context window fills. `SummarizationMiddleware` compresses history automatically so the agent keeps working without hitting token limits.
+
+
+
+---
+
+## Step 4: Add skills
+
+Skills give the agent on-demand domain knowledge via progressive disclosure: loaded only when the current task calls for it. Create a skill file in your skills directory:
+
+```
+skills/
+  pandas-patterns/
+    SKILL.md
+```
+
+```markdown
+---
+name: pandas-patterns
+description: Common pandas and matplotlib patterns for data analysis and visualization
+---
+
+## Data loading
+Use `pd.read_csv()` for CSV files. Always check `df.info()` and `df.describe()` first.
+
+## Visualization
+Use `matplotlib` for bar charts, `seaborn` for statistical plots.
+Save figures with `plt.savefig("output.png", dpi=150, bbox_inches="tight")`.
+
+## Reporting
+Write a markdown summary to `report.md` alongside any generated charts.
+```
+
+
+
+---
+
+## Step 5: Add a visualization subagent
+
+Some tasks benefit from isolation. A visualization subagent runs in its own context window, keeping chart generation separate from the main analysis: and enabling parallel execution.
+
+
+
+The main agent handles analysis and planning; it delegates chart generation to the `visualizer` subagent via the `task` tool.
+
+---
+
+## What you built
+
+| Middleware | What it adds |
+|---|---|
+| [`FilesystemMiddleware`](https://reference.langchain.com/javascript/deepagents/middleware/createFilesystemMiddleware) + `LangSmithSandbox` | Isolated filesystem + `execute` tool |
+| [`SummarizationMiddleware`](https://reference.langchain.com/javascript/langchain/index/summarizationMiddleware) | Automatic context compression |
+| [`SkillsMiddleware`](https://reference.langchain.com/javascript/deepagents/middleware/createSkillsMiddleware) | Domain knowledge loaded on demand |
+| [`TodoListMiddleware`](https://reference.langchain.com/javascript/langchain/index/todoListMiddleware) + [`SubAgentMiddleware`](https://reference.langchain.com/javascript/deepagents/middleware/createSubAgentMiddleware) | Parallel visualization subagent |
+
+This is the same foundation as `create_deep_agent`: assembled manually so you control exactly what's included. The possibilities don't end here: see [Prebuilt middleware](/oss/javascript/langchain/middleware/built-in) for the full list of composable capabilities, and the [`create_agent`](https://reference.langchain.com/javascript/langchain/index/createAgent) reference for all configuration options.
+
+---
+
+<div className="source-links">
+<Callout icon="terminal-2">
+    [Connect these docs](/use-these-docs) to Claude, VSCode, and more via MCP for real-time answers.
+</Callout>
+<Callout icon="edit">
+    [Edit this page on GitHub](https://github.com/langchain-ai/docs/edit/main/src/oss/langchain/deep-agent-from-scratch.mdx) or [file an issue](https://github.com/langchain-ai/docs/issues/new/choose).
+</Callout>
+</div>

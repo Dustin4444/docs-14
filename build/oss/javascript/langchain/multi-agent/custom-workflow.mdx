@@ -160,11 +160,11 @@ const getLatestNews = tool(
 );
 
 const agent = createAgent({
-  model: "openai:gpt-5.4",
+  model: "openai:gpt-5.5",
   tools: [getLatestNews],
 });
 
-const model = new ChatOpenAI({ model: "gpt-5.4" });
+const model = new ChatOpenAI({ model: "gpt-5.5" });
 
 const RewrittenQuery = z.object({ query: z.string() });
 

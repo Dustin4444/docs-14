@@ -5,7 +5,6 @@ sidebarTitle: Overview
 
 import OrgWorkspaceRole from '/snippets/langsmith/multi-workspace-org-roles.mdx';
 import PermissionReference from '/snippets/langsmith/permissions-reference.mdx';
-import MaxRunsPerTrace from '/snippets/langsmith/max-runs-per-trace.mdx';
 
 This overview covers topics related to managing users, organizations, workspaces, and applications within LangSmith.
 
@@ -19,7 +18,7 @@ When you log in for the first time, a personal organization will be created for 
 
 | Feature             | Personal            | Shared                                                                                       |
 | ------------------- | ------------------- | -------------------------------------------------------------------------------------------- |
-| Maximum workspaces  | 1                   | Variable, depending on plan (see [pricing page](https://www.langchain.com/pricing-langsmith) |
+| Maximum workspaces  | 1                   | Variable, depending on plan (see the [pricing page](https://www.langchain.com/pricing-langsmith)) |
 | Collaboration       | Cannot invite users | Can invite users                                                                             |
 | Billing: paid plans | Developer plan only | All other plans available                                                                    |
 
@@ -39,7 +38,7 @@ An application is a logical grouping of resources within a workspace. Applicatio
 
 Applications are built on top of [resource tags](/langsmith/administration-overview#resource-tags) and can be used to control resource access using [ABAC](/langsmith/organization-workspace-operations#access-policies).
 
-Switch applications from the main navigation sidebar in the [LangSmith UI](https://smith.langchain.com). Use the **Application** dropdown at the top of the sidebar to select an application.
+Switch applications from the main navigation sidebar in the [LangSmith UI](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=langsmith-administration-overview). Use the **Application** dropdown at the top of the sidebar to select an application.
 
 Any resource can be created without being tagged to an application. These resources will be visible when the **All applications** option is selected.
 
@@ -72,7 +71,9 @@ See the table below for details on which features are available in which scope(s
 | Assigning Organization Roles                                                | Organization                    |
 | RBAC: Creating/Editing/Deleting Custom Roles                                | Organization                    |
 
-\* Data retention settings and usage limits will be available soon for the organization level as well \*\* Self-hosted installations may enable workspace-level invites of users to the organization via a feature flag. See the [self-hosted user management docs](/langsmith/self-host-user-management) for details.
+\* Data retention settings and usage limits will be available soon for the organization level as well
+
+\*\* Self-hosted installations may enable workspace-level invites of users to the organization via a feature flag. For details, refer to the [self-hosted user management docs](/langsmith/self-host-user-management).
 
 ### Resource tags
 
@@ -80,7 +81,7 @@ Resource tags allow you to further segregate resources within a workspace for us
 
 LangSmith resource tags are very similar to tags in cloud services like [AWS](https://docs.aws.amazon.com/tag-editor/latest/userguide/tagging.html).
 
-Navigate to **Settings** in the [LangSmith UI](https://smith.langchain.com) to select the **Resource tags** page in the sidebar.
+Navigate to **Settings** in the [LangSmith UI](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=langsmith-administration-overview) to select the **Resource tags** page in the sidebar.
 
 ## User management and RBAC
 
@@ -215,7 +216,11 @@ This section covers how data retention works and how it's priced in LangSmith.
 #### Why retention matters
 
 * **Privacy**: Many data privacy regulations, such as GDPR in Europe or CCPA in California, require organizations to delete personal data once it's no longer necessary for the purposes for which it was collected. Setting retention periods aids in compliance with such regulations.
-* **Cost**: LangSmith charges less for traces that have low data retention. For more information, learn how to [enfore spend limits](/langsmith/billing#enforce-spend-limits).
+* **Cost**: LangSmith charges less for traces that have low data retention. For more information, learn how to [enforce spend limits](/langsmith/billing#enforce-spend-limits).
+
+<Tip>
+Plan your retention tiers before you start sending traces. Changes apply to new traces only—existing traces keep their original tier. See [Change project-level default retention](/langsmith/billing#change-project-level-default-retention).
+</Tip>
 
 #### How it works
 
@@ -225,6 +230,10 @@ LangSmith has two tiers of traces based on Data Retention with the following cha
 | -------------------- | ---------------- | -------------- |
 | **Price**            | [See pricing page](https://www.langchain.com/pricing-langsmith) | [See pricing page](https://www.langchain.com/pricing-langsmith) |
 | **Retention Period** | 14 days          | 400 days       |
+
+<Note>
+Enterprise customers can customize the extended retention period per workspace. Changes apply to new traces only—existing traces are unaffected. See [Customize extended retention policy](/langsmith/data-purging-compliance#customize-extended-retention-policy).
+</Note>
 
 **Data deletion after retention ends**
 
@@ -277,10 +286,6 @@ A natural question to ask when considering our pricing is why not just show the 
 While we understand this would be more straightforward, it doesn't fit trace upgrades properly. Consider a `base` tier trace that was recorded on June 30, and upgraded to `extended` tier on July 3. The `base` tier trace occurred in the June billing period, but the upgrade occurred in the July billing period. Therefore, we need to be able to measure these two events independently to properly bill our customers.
 
 If your trace was recorded as an extended retention trace, then the `base` and `extended` metrics will both be recorded with the same timestamp.
-
-**Cost breakdown**
-
-The Base Charge for a trace is .05¢ per trace. We priced the upgrade such that an `extended` retention trace costs 10x the price of a base tier trace (.50¢ per trace) including both metrics. Thus, each upgrade costs .45¢.
 
 ### Rate limits
 
@@ -360,7 +365,7 @@ This is thrown by our application and varies by organization based on their conf
 
 #### Run query endpoint
 
-The [`POST /runs/query`](https://api.smith.langchain.com/redoc#tag/run/operation/query_runs_api_v1_runs_query_post) endpoint has additional per-tenant rate limits based on query parameters. See [Query traces using the SDK](/langsmith/export-traces#rate-limits) for details.
+The [`POST /runs/query`](/langsmith/smith-api/run/query-runs) endpoint has additional per-tenant rate limits based on query parameters. See [Query traces using the SDK](/langsmith/export-traces#rate-limits) for details.
 
 #### Handling 429s responses in your application
 

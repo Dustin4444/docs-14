@@ -105,7 +105,7 @@ For more details, see our [Installation guide](/oss/javascript/langchain/install
 
 ### LangSmith
 
-Set up [LangSmith](https://smith.langchain.com) to inspect what is happening inside your agent. Then set the following environment variables:
+Set up [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-multi-agent-skills-sql-assistant) to inspect what is happening inside your agent. Then set the following environment variables:
 
 
 
@@ -418,10 +418,8 @@ Test the agent with a question that requires skill-specific knowledge:
 
 
 ```typescript
-import { v4 as uuidv4 } from "uuid";
-
 // Configuration for this conversation thread
-const threadId = uuidv4();
+const threadId = crypto.randomUUID();
 const config = { configurable: { thread_id: threadId } };
 
 // Ask for a SQL query
@@ -695,7 +693,6 @@ import {
 } from "langchain";
 import { MemorySaver, Command } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
-import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
 // A skill that can be progressively disclosed to the agent
@@ -911,7 +908,7 @@ const agent = createAgent({
 });
 
 // Configuration for this conversation thread
-const threadId = uuidv4();
+const threadId = crypto.randomUUID();
 const config = { configurable: { thread_id: threadId } };
 
 // Ask for a SQL query
@@ -1012,7 +1009,7 @@ This combination of progressive disclosure (loading schemas on-demand) and dynam
 - Explore the [handoffs pattern](/oss/javascript/langchain/multi-agent/handoffs-customer-support) for sequential workflows
 - Read the [subagents pattern](/oss/javascript/langchain/multi-agent/subagents-personal-assistant) for parallel task routing
 - See [multi-agent patterns](/oss/javascript/langchain/multi-agent) for other approaches to specialized agents
-- Use [LangSmith](https://smith.langchain.com) to debug and monitor skill loading
+- Use [LangSmith](https://smith.langchain.com?utm_source=docs&utm_medium=cta&utm_campaign=langsmith-signup&utm_content=oss-langchain-multi-agent-skills-sql-assistant) to debug and monitor skill loading
 
 ---
 

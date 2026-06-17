@@ -20,9 +20,13 @@ The quality and capabilities of the model you choose directly impact your agent'
 
 LangChain's standard model interfaces give you access to many different provider integrations, which makes it easy to experiment with and switch between models to find the best fit for your use case.
 
-<Info>
-    For provider-specific integration information and capabilities, see the provider's [chat model page](/oss/python/integrations/chat).
-</Info>
+For provider-specific integration information and capabilities, see the provider's [chat model page](/oss/python/integrations/chat).
+
+<Tip>
+[LangSmith](/langsmith/observability) traces each model call so you can compare providers, inspect tool routing, and debug failures. Follow the [tracing quickstart](/langsmith/trace-with-langchain) to get set up.
+
+We recommend you also set up [LangSmith Engine](/langsmith/engine) which monitors your traces, detects issues, and proposes fixes.
+</Tip>
 
 ## Basic usage
 
@@ -116,6 +120,29 @@ model = init_chat_model(
 ```
 
 
+
+### Connection resilience
+
+LangChain chat models automatically retry failed API requests with exponential backoff. By default, models retry up to **6 times** for network errors, rate limits (429), and server errors (5xx). Client errors like 401 (unauthorized) or 404 are not retried.
+
+You can adjust `max_retries` and `timeout` when creating a model, then pass that instance to `create_agent`, `create_deep_agent`, or call it standalone:
+
+```python
+from langchain.chat_models import init_chat_model
+
+model = init_chat_model(
+    "google_genai:gemini-3.5-flash",
+    max_retries=10,  # Increase for unreliable networks (default: 6)
+    timeout=120,  # Seconds; increase for slow connections
+)
+```
+
+
+
+
+<Tip>
+    For long-running agent graphs on unreliable networks, consider higher `max_retries` (for example 10–15) and a [checkpointer](/oss/python/langgraph/persistence) so that progress is preserved across failures.
+</Tip>
 
 <Info>
     Each chat model integration may have additional params used to control provider-specific functionality.
@@ -763,7 +790,7 @@ Model profile data allow applications to work around model capabilities dynamica
 1. [Summarization middleware](/oss/python/langchain/middleware/built-in#summarization) can trigger summarization based on a model's context window size.
 2. [Structured output](/oss/python/langchain/structured-output) strategies in `create_agent` can be inferred automatically (e.g., by checking support for native structured output features).
 3. Model inputs can be gated based on supported [modalities](#multimodal) and maximum input tokens.
-4. The [Deep Agents CLI](/oss/python/deepagents/cli) filters the [interactive model switcher](/oss/python/deepagents/cli/providers#which-models-appear-in-the-switcher) to models whose profiles report `tool_calling` support and text I/O, and displays context window sizes and capability flags in the selector detail view.
+4. [Deep Agents Code](/oss/python/deepagents/code) filters the [interactive model switcher](/oss/python/deepagents/code/providers#which-models-appear-in-the-switcher) to models whose profiles report `tool_calling` support and text I/O, and displays context window sizes and capability flags in the selector detail view.
 
 <Accordion title="Updating or overwriting profile data">
     Model profile data can be changed if it is missing, stale, or incorrect.
@@ -904,6 +931,7 @@ Many providers offer prompt caching features to reduce latency and cost on repea
     - [Gemini](https://reference.langchain.com/python/integrations/langchain_google_genai/).
     - [AWS Bedrock](/oss/python/integrations/chat/bedrock)
 
+
 <Warning>
     Prompt caching is often only engaged above a minimum input token threshold. See [provider pages](/oss/python/integrations/chat) for details.
 </Warning>
@@ -983,7 +1011,7 @@ To help manage rate limits, chat model integrations accept a `rate_limiter` para
     )
 
     model = init_chat_model(
-        model="gpt-5.4",
+        model="gpt-5.5",
         model_provider="openai",
         rate_limiter=rate_limiter  # [!code highlight]
     )
@@ -1034,7 +1062,7 @@ You can configure a custom base URL for providers that implement the OpenAI Chat
     from langchain_openai import ChatOpenAI
 
     model = ChatOpenAI(
-        model="gpt-5.4",
+        model="gpt-5.5",
         openai_proxy="http://proxy.example.com:8080"
     )
     ```
@@ -1053,7 +1081,7 @@ Certain models can be configured to return token-level log probabilities represe
 
 ```python
 model = init_chat_model(
-    model="gpt-5.4",
+    model="gpt-5.5",
     model_provider="openai"
 ).bind(logprobs=True)
 
@@ -1166,7 +1194,7 @@ response = model.invoke(
 
 
 These configuration values are particularly useful when:
-- Debugging with [LangSmith](/langsmith/home) tracing
+- Debugging with [LangSmith](/langsmith/observability) tracing
 - Implementing custom logging or monitoring
 - Controlling resource usage in production
 - Tracking invocations across complex pipelines
@@ -1318,6 +1346,53 @@ configurable_model.invoke(
     ]
     ```
 </Accordion>
+
+
+### Dynamic model selection
+
+Dynamic models are selected at <Tooltip tip="The execution environment of your agent, containing immutable configuration and contextual data that persists throughout the agent's execution (e.g., user IDs, session details, or application-specific configuration).">runtime</Tooltip> based on the current <Tooltip tip="The data that flows through your agent's execution, including messages, custom fields, and any information that needs to be tracked and potentially modified during processing (e.g., user preferences or tool usage stats).">state</Tooltip> and context. This enables sophisticated routing logic and cost optimization.
+
+To use a dynamic model, create middleware using the [`@wrap_model_call`](https://reference.langchain.com/python/langchain/agents/middleware/types/wrap_model_call) decorator that modifies the model in the request:
+
+```python
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+from langchain.agents.middleware import wrap_model_call, ModelRequest, ModelResponse
+
+
+basic_model = ChatOpenAI(model="gpt-5.4-mini")
+advanced_model = ChatOpenAI(model="gpt-5.5")
+
+@wrap_model_call
+def dynamic_model_selection(request: ModelRequest, handler) -> ModelResponse:
+    """Choose model based on conversation complexity."""
+    message_count = len(request.state["messages"])
+
+    if message_count > 10:
+        # Use an advanced model for longer conversations
+        model = advanced_model
+    else:
+        model = basic_model
+
+    return handler(request.override(model=model))
+
+agent = create_agent(
+    model=basic_model,  # Default model
+    tools=tools,
+    middleware=[dynamic_model_selection]
+)
+```
+
+<Warning>
+Pre-bound models (models with [`bind_tools`](https://reference.langchain.com/python/langchain-core/language_models/chat_models/BaseChatModel/bind_tools) already called) are not supported when using structured output. If you need dynamic model selection with structured output, ensure the models passed to the middleware are not pre-bound.
+</Warning>
+
+
+
+
+<Tip>
+For model configuration details, see [Models](/oss/python/langchain/models). For dynamic model selection patterns, see [Dynamic model in middleware](/oss/python/langchain/middleware#dynamic-model).
+</Tip>
 
 ---
 

@@ -41,7 +41,7 @@ from deepagents import create_deep_agent
 from deepagents.backends import CompositeBackend, StateBackend, StoreBackend
 
 agent = create_deep_agent(
-    model="google_genai:gemini-3.1-pro-preview",
+    model="google_genai:gemini-3.5-flash",
     memory=["/memories/AGENTS.md"],
     skills=["/skills/"],
     backend=CompositeBackend(
@@ -105,7 +105,7 @@ Use the fetch_url tool to read https://docs.langchain.com/llms.txt, then fetch r
 )
 
 agent = create_deep_agent(
-    model="google_genai:gemini-3.1-pro-preview",
+    model="google_genai:gemini-3.5-flash",
     memory=["/memories/AGENTS.md"],
     skills=["/skills/"],
     backend=lambda rt: CompositeBackend(
@@ -153,7 +153,7 @@ from deepagents import create_deep_agent
 from deepagents.backends import CompositeBackend, StateBackend, StoreBackend
 
 agent = create_deep_agent(
-    model="google_genai:gemini-3.1-pro-preview",
+    model="google_genai:gemini-3.5-flash",
     memory=["/memories/preferences.md"],
     skills=["/skills/"],
     backend=CompositeBackend(
@@ -222,7 +222,7 @@ Use the fetch_url tool to read https://docs.langchain.com/llms.txt, then fetch r
 )
 
 agent = create_deep_agent(
-    model="google_genai:gemini-3.1-pro-preview",
+    model="google_genai:gemini-3.5-flash",
     memory=["/memories/preferences.md"],
     skills=["/skills/"],
     backend=lambda rt: CompositeBackend(
@@ -272,7 +272,7 @@ On top of the basic configuration options for memory paths and scope, you can al
 
 Episodic memory stores records of past experiences: what happened, in what order, and what the outcome was. Unlike semantic memory (facts and preferences stored in files like `AGENTS.md`), episodic memory preserves the full conversational context so the agent can recall *how* a problem was solved, not just *what* was learned from it.
 
-Deep Agents already use [checkpointers](/oss/python/langgraph/persistence#checkpoints) which is the mechanism that supports episodic memory: every conversation is persisted as a checkpointed thread.
+Deep Agents already use [checkpointers](/oss/python/langgraph/checkpointers#checkpoints) which is the mechanism that supports episodic memory: every conversation is persisted as a checkpointed thread.
 
 To make past conversations searchable, wrap thread search in a tool. The `user_id` is pulled from the runtime context rather than passed as a parameter:
 
@@ -333,7 +333,7 @@ from deepagents import create_deep_agent
 from deepagents.backends import CompositeBackend, StateBackend, StoreBackend
 
 agent = create_deep_agent(
-    model="google_genai:gemini-3.1-pro-preview",
+    model="google_genai:gemini-3.5-flash",
     memory=[
         "/memories/preferences.md",
         "/policies/compliance.md",
@@ -426,7 +426,7 @@ async def search_recent_conversations(query: str, runtime: ToolRuntime) -> str:
 
 
 agent = create_deep_agent(
-    model="google_genai:gemini-3.1-pro-preview",
+    model="google_genai:gemini-3.5-flash",
     system_prompt="""Review recent conversations and update the user's memory file.
 Merge new facts, remove outdated information, and keep it concise.""",
     tools=[search_recent_conversations],

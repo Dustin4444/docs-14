@@ -3,6 +3,8 @@ title: Use the functional API
 sidebarTitle: Use the Functional API
 ---
 
+import LanggraphFunctionalApiStreamCustomDataPy from '/snippets/code-samples/langgraph-functional-api-stream-custom-data-py.mdx';
+import LanggraphFunctionalApiStreamCustomDataJs from '/snippets/code-samples/langgraph-functional-api-stream-custom-data-js.mdx';
 
 The [**Functional API**](/oss/javascript/langgraph/functional-api) allows you to add LangGraph's key features ([persistence](/oss/javascript/langgraph/persistence), [memory](/oss/javascript/langgraph/add-memory), [human-in-the-loop](/oss/javascript/langgraph/interrupts), and [streaming](/oss/javascript/langgraph/streaming)) to your applications with minimal changes to your existing code.
 
@@ -309,55 +311,16 @@ const myWorkflow = entrypoint(
 The **Functional API** uses the same streaming mechanism as the **Graph API**. Please
 read the [**streaming guide**](/oss/javascript/langgraph/streaming) section for more details.
 
-Example of using the streaming API to stream both updates and custom data.
+Example of using the streaming API to stream value chunks from a workflow run.
 
 
 
-```typescript
-import {
-  entrypoint,
-  MemorySaver,
-  LangGraphRunnableConfig,
-} from "@langchain/langgraph";
-
-const checkpointer = new MemorySaver();
-
-const main = entrypoint(
-  { checkpointer, name: "main" },
-  async (
-    inputs: { x: number },
-    config: LangGraphRunnableConfig
-  ): Promise<number> => {
-    config.writer?.("Started processing");   // [!code highlight]
-    const result = inputs.x * 2;
-    config.writer?.(`Result is ${result}`);   // [!code highlight]
-    return result;
-  }
-);
-
-const config = { configurable: { thread_id: "abc" } };
-
-  // [!code highlight]
-for await (const [mode, chunk] of await main.stream(
-  { x: 5 },
-  { streamMode: ["custom", "updates"], ...config }   // [!code highlight]
-)) {
-  console.log(`${mode}: ${JSON.stringify(chunk)}`);
-}
-```
+<LanggraphFunctionalApiStreamCustomDataJs />
 
 1. Emit custom data before computation begins.
 2. Emit another custom message after computing the result.
-3. Use `.stream()` to process streamed output.
-4. Specify which streaming modes to use.
-
-```
-updates: {"addOne": 2}
-updates: {"addTwo": 3}
-custom: "hello"
-custom: "world"
-updates: {"main": 5}
-```
+3. Use `streamEvents()` to process streamed output.
+4. Iterate `stream.values` to receive value snapshots.
 
 
 ## Retry policy
@@ -452,16 +415,10 @@ const main = entrypoint(
   }
 );
 
-for await (const chunk of await main.stream(
-  { x: 5 },
-  { streamMode: "updates" }
-)) {
-  console.log(chunk);
+const stream = await main.streamEvents({ x: 5 }, { version: "v3" });
+for await (const snapshot of stream.values) {
+  console.log(snapshot);
 }
-
-//> { slowAdd: 10 }
-//> { slowAdd: 10, '__metadata__': { cached: true } }
-//> { main: { result1: 10, result2: 10 } }
 ```
 
 1. `ttl` is specified in seconds. The cache will be invalidated after this time.
@@ -613,9 +570,11 @@ Let's send in a query string:
 ```typescript
 const config = { configurable: { thread_id: "1" } };
 
-for await (const event of await graph.stream("foo", config)) {
-  console.log(event);
-  console.log("\n");
+const stream = await graph.streamEvents("foo", config, { version: "v3" });
+for await (const message of stream.messages) {
+  for await (const token of message.text) {
+    process.stdout.write(token);
+  }
 }
 ```
 
@@ -626,12 +585,15 @@ Note that we've paused with an [`interrupt`](https://reference.langchain.com/jav
 
 ```typescript
 // Continue execution
-for await (const event of await graph.stream(
+const stream = await graph.streamEvents(
   new Command({ resume: "baz" }),
-  config
-)) {
-  console.log(event);
-  console.log("\n");
+  config,
+  { version: "v3" }
+);
+for await (const message of stream.messages) {
+  for await (const token of message.text) {
+    process.stdout.write(token);
+  }
 }
 ```
 
@@ -932,19 +894,15 @@ const workflow = entrypoint(
 const config = { configurable: { thread_id: "1" } };
 const inputMessage = { role: "user", content: "hi! I'm bob" };
 
-for await (const chunk of await workflow.stream([inputMessage], {
-  ...config,
-  streamMode: "values",
-})) {
-  console.log(chunk.content);
+const stream1 = await workflow.streamEvents([inputMessage], { ...config, version: "v3" });
+for await (const snapshot of stream1.values) {
+  console.log(snapshot);
 }
 
 const inputMessage2 = { role: "user", content: "what's my name?" };
-for await (const chunk of await workflow.stream([inputMessage2], {
-  ...config,
-  streamMode: "values",
-})) {
-  console.log(chunk.content);
+const stream2 = await workflow.streamEvents([inputMessage2], { ...config, version: "v3" });
+for await (const snapshot of stream2.values) {
+  console.log(snapshot);
 }
 ```
 

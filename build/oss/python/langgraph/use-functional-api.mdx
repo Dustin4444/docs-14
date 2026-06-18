@@ -3,6 +3,8 @@ title: Use the functional API
 sidebarTitle: Use the Functional API
 ---
 
+import LanggraphFunctionalApiStreamCustomDataPy from '/snippets/code-samples/langgraph-functional-api-stream-custom-data-py.mdx';
+import LanggraphFunctionalApiStreamCustomDataJs from '/snippets/code-samples/langgraph-functional-api-stream-custom-data-js.mdx';
 
 The [**Functional API**](/oss/python/langgraph/functional-api) allows you to add LangGraph's key features ([persistence](/oss/python/langgraph/persistence), [memory](/oss/python/langgraph/add-memory), [human-in-the-loop](/oss/python/langgraph/interrupts), and [streaming](/oss/python/langgraph/streaming)) to your applications with minimal changes to your existing code.
 
@@ -281,47 +283,16 @@ def my_workflow(inputs: dict) -> int:
 The **Functional API** uses the same streaming mechanism as the **Graph API**. Please
 read the [**streaming guide**](/oss/python/langgraph/streaming) section for more details.
 
-Example of using the streaming API to stream both updates and custom data.
+Example of using the streaming API to stream value chunks from a workflow run.
 
-```python
-from langgraph.func import entrypoint
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.config import get_stream_writer   # [!code highlight]
-
-checkpointer = InMemorySaver()
-
-@entrypoint(checkpointer=checkpointer)
-def main(inputs: dict) -> int:
-    writer = get_stream_writer()   # [!code highlight]
-    writer("Started processing")   # [!code highlight]
-    result = inputs["x"] * 2
-    writer(f"Result is {result}")   # [!code highlight]
-    return result
-
-config = {"configurable": {"thread_id": "abc"}}
-
-for mode, chunk in main.stream(   # [!code highlight]
-    {"x": 5},
-    stream_mode=["custom", "updates"],   # [!code highlight]
-    config=config
-):
-    print(f"{mode}: {chunk}")
-```
+<LanggraphFunctionalApiStreamCustomDataPy />
 
 1. Import [`get_stream_writer`](https://reference.langchain.com/python/langgraph/config/get_stream_writer) from `langgraph.config`.
 2. Obtain a stream writer instance within the entrypoint.
 3. Emit custom data before computation begins.
 4. Emit another custom message after computing the result.
-5. Use `.stream()` to process streamed output.
-6. Specify which streaming modes to use.
-
-```pycon
-('updates', {'add_one': 2})
-('updates', {'add_two': 3})
-('custom', 'hello')
-('custom', 'world')
-('updates', {'main': 5})
-```
+5. Use `stream_events()` to process streamed output.
+6. Iterate over `(mode, chunk)` pairs from `interleave("values")`.
 
 <Warning>
 **Async with Python < 3.11**
@@ -446,12 +417,9 @@ def main(inputs: dict) -> dict[str, int]:
     return {"result1": result1, "result2": result2}
 
 
-for chunk in main.stream({"x": 5}, stream_mode="updates"):
-    print(chunk)
-
-#> {'slow_add': 10}
-#> {'slow_add': 10, '__metadata__': {'cached': True}}
-#> {'main': {'result1': 10, 'result2': 10}}
+stream = main.stream_events({"x": 5}, version="v3")
+for snapshot in stream.values:
+    print(snapshot)
 ```
 
 1. `ttl` is specified in seconds. The cache will be invalidated after this time.
@@ -605,9 +573,10 @@ Let's send in a query string:
 ```python
 config = {"configurable": {"thread_id": "1"}}
 
-for event in graph.stream("foo", config):
-    print(event)
-    print("\n")
+stream = graph.stream_events("foo", config, version="v3")
+for message in stream.messages:
+    for token in message.text:
+        print(token, end="", flush=True)
 ```
 
 
@@ -617,9 +586,10 @@ Note that we've paused with an [`interrupt`](https://reference.langchain.com/pyt
 
 ```python
 # Continue execution
-for event in graph.stream(Command(resume="baz"), config):
-    print(event)
-    print("\n")
+stream = graph.stream_events(Command(resume="baz"), config, version="v3")
+for message in stream.messages:
+    for token in message.text:
+        print(token, end="", flush=True)
 ```
 
 
@@ -905,12 +875,14 @@ def workflow(inputs: list[BaseMessage], *, previous: list[BaseMessage]):
 
 config = {"configurable": {"thread_id": "1"}}
 input_message = {"role": "user", "content": "hi! I'm bob"}
-for chunk in workflow.stream([input_message], config, stream_mode="values"):
-    chunk.pretty_print()
+stream = workflow.stream_events([input_message], config, version="v3")
+for snapshot in stream.values:
+    print(snapshot)
 
 input_message = {"role": "user", "content": "what's my name?"}
-for chunk in workflow.stream([input_message], config, stream_mode="values"):
-    chunk.pretty_print()
+stream = workflow.stream_events([input_message], config, version="v3")
+for snapshot in stream.values:
+    print(snapshot)
 ```
 
 

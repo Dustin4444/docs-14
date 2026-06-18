@@ -328,7 +328,7 @@ When multiple actions are under review, provide a decision for each action in th
 
 ## Streaming with human-in-the-loop
 
-You can use `stream()` instead of `invoke()` to get real-time updates while the agent runs and handles interrupts. Use `stream_mode=['updates', 'messages']` with `version="v2"` to stream both agent progress and LLM tokens in the unified v2 format.
+You can stream real-time updates while the agent runs and handles interrupts using `stream_events()`. Use `stream.messages` to stream LLM tokens and `stream.values` to check agent state snapshots for interrupts.
 
 
 
@@ -338,34 +338,29 @@ import { Command } from "@langchain/langgraph";
 const config = { configurable: { thread_id: "some_id" } };
 
 // Stream agent progress and LLM tokens until interrupt
-for await (const [mode, chunk] of await agent.stream(
+const stream = await agent.streamEvents(
     { messages: [{ role: "user", content: "Delete old records from the database" }] },
-    { ...config, streamMode: ["updates", "messages"] }  // [!code highlight]
-)) {
-    if (mode === "messages") {
-        // LLM token
-        const [token, metadata] = chunk;
-        if (token.content) {
-            process.stdout.write(token.content);
-        }
-    } else if (mode === "updates") {
-        // Check for interrupt
-        if ("__interrupt__" in chunk) {
-            console.log(`\n\nInterrupt: ${JSON.stringify(chunk.__interrupt__)}`);
-        }
+    { ...config, version: "v3" }  // [!code highlight]
+);
+for await (const message of stream.messages) {  // [!code highlight]
+    for await (const token of message.text) {  // [!code highlight]
+        process.stdout.write(token);
     }
 }
 
+// Check whether the run paused for human input
+if (stream.interrupted) {  // [!code highlight]
+    console.log(`\n\nInterrupt: ${JSON.stringify(stream.interrupts)}`);  // [!code highlight]
+}
+
 // Resume with streaming after human decision
-for await (const [mode, chunk] of await agent.stream(
+const resumeStream = await agent.streamEvents(
     new Command({ resume: { decisions: [{ type: "approve" }] } }),
-    { ...config, streamMode: ["updates", "messages"] }
-)) {
-    if (mode === "messages") {
-        const [token, metadata] = chunk;
-        if (token.content) {
-            process.stdout.write(token.content);
-        }
+    { ...config, version: "v3" }  // [!code highlight]
+);
+for await (const message of resumeStream.messages) {  // [!code highlight]
+    for await (const token of message.text) {
+        process.stdout.write(token);
     }
 }
 ```

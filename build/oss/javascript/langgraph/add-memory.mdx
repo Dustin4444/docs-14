@@ -105,18 +105,20 @@ In production, use a checkpointer backed by a database:
     }
   };
 
-  for await (const chunk of await graph.stream(
+  const stream1 = await graph.streamEvents(
     { messages: [{ role: "user", content: "hi! I'm bob" }] },
-    { ...config, streamMode: "values" }
-  )) {
-    console.log(chunk.messages.at(-1)?.content);
+    { ...config, version: "v3" }
+  );
+  for await (const snapshot of stream1.values) {
+    console.log(snapshot);
   }
 
-  for await (const chunk of await graph.stream(
+  const stream2 = await graph.streamEvents(
     { messages: [{ role: "user", content: "what's my name?" }] },
-    { ...config, streamMode: "values" }
-  )) {
-    console.log(chunk.messages.at(-1)?.content);
+    { ...config, version: "v3" }
+  );
+  for await (const snapshot of stream2.values) {
+    console.log(snapshot);
   }
   ```
 
@@ -162,18 +164,20 @@ In production, use a checkpointer backed by a database:
 
   const config = { configurable: { thread_id: "1" } };
 
-  for await (const chunk of await graph.stream(
+  const stream1 = await graph.streamEvents(
     { messages: [{ role: "user", content: "hi! I'm bob" }] },
-    { ...config, streamMode: "values" }
-  )) {
-    console.log(chunk.messages.at(-1)?.content);
+    { ...config, version: "v3" }
+  );
+  for await (const snapshot of stream1.values) {
+    console.log(snapshot);
   }
 
-  for await (const chunk of await graph.stream(
+  const stream2 = await graph.streamEvents(
     { messages: [{ role: "user", content: "what's my name?" }] },
-    { ...config, streamMode: "values" }
-  )) {
-    console.log(chunk.messages.at(-1)?.content);
+    { ...config, version: "v3" }
+  );
+  for await (const snapshot of stream2.values) {
+    console.log(snapshot);
   }
   ```
 
@@ -374,18 +378,20 @@ In production, use a store backed by a database:
     store,
   });
 
-  for await (const chunk of await graph.stream(
+  const stream1 = await graph.streamEvents(
     { messages: [{ role: "user", content: "Hi! Remember: my name is Bob" }] },
-    { configurable: { thread_id: "1" }, context: { userId: "1" }, streamMode: "values" }
-  )) {
-    console.log(chunk.messages.at(-1)?.content);
+    { configurable: { thread_id: "1" }, context: { userId: "1" }, version: "v3" }
+  );
+  for await (const snapshot of stream1.values) {
+    console.log(snapshot);
   }
 
-  for await (const chunk of await graph.stream(
+  const stream2 = await graph.streamEvents(
     { messages: [{ role: "user", content: "what is my name?" }] },
-    { configurable: { thread_id: "2" }, context: { userId: "1" }, streamMode: "values" }
-  )) {
-    console.log(chunk.messages.at(-1)?.content);
+    { configurable: { thread_id: "2" }, context: { userId: "1" }, version: "v3" }
+  );
+  for await (const snapshot of stream2.values) {
+    console.log(snapshot);
   }
   ```
 
@@ -443,18 +449,20 @@ In production, use a store backed by a database:
 
   const graph = builder.compile({ checkpointer, store });
 
-  for await (const chunk of await graph.stream(
+  const stream1 = await graph.streamEvents(
     { messages: [{ role: "user", content: "Hi! Remember: my name is Bob" }] },
-    { configurable: { thread_id: "1" }, context: { userId: "1" }, streamMode: "values" }
-  )) {
-    console.log(chunk.messages.at(-1)?.content);
+    { configurable: { thread_id: "1" }, context: { userId: "1" }, version: "v3" }
+  );
+  for await (const snapshot of stream1.values) {
+    console.log(snapshot);
   }
 
-  for await (const chunk of await graph.stream(
+  const stream2 = await graph.streamEvents(
     { messages: [{ role: "user", content: "what is my name?" }] },
-    { configurable: { thread_id: "2" }, context: { userId: "1" }, streamMode: "values" }
-  )) {
-    console.log(chunk.messages.at(-1)?.content);
+    { configurable: { thread_id: "2" }, context: { userId: "1" }, version: "v3" }
+  );
+  for await (const snapshot of stream2.values) {
+    console.log(snapshot);
   }
   ```
 
@@ -545,12 +553,13 @@ const items = await store.search(["user_123", "memories"], {
           .addEdge(START, "chat");
         const graph = builder.compile({ store });
 
-        for await (const [message, metadata] of await graph.stream(
+        const stream = await graph.streamEvents(
           { messages: [{ role: "user", content: "I'm hungry" }] },
-          { streamMode: "messages" }
-        )) {
-          if (message.content) {
-            console.log(message.content);
+          { version: "v3" }
+        );
+        for await (const message of stream.messages) {
+          for await (const token of message.text) {
+            process.stdout.write(token);
           }
         }
         ```
@@ -605,12 +614,13 @@ const items = await store.search(["user_123", "memories"], {
           .addEdge(START, "chat");
         const graph = builder.compile({ store });
 
-        for await (const [message, metadata] of await graph.stream(
+        const stream = await graph.streamEvents(
           { messages: [{ role: "user", content: "I'm hungry" }] },
-          { streamMode: "messages" }
-        )) {
-          if (message.content) {
-            console.log(message.content);
+          { version: "v3" }
+        );
+        for await (const message of stream.messages) {
+          for await (const token of message.text) {
+            process.stdout.write(token);
           }
         }
         ```
@@ -670,12 +680,13 @@ const items = await store.search(["user_123", "memories"], {
           .addEdge(START, "chat");
         const graph = builder.compile({ store });
 
-        for await (const [message, metadata] of await graph.stream(
+        const stream = await graph.streamEvents(
           { messages: [{ role: "user", content: "I'm hungry" }] },
-          { streamMode: "messages" }
-        )) {
-          if (message.content) {
-            console.log(message.content);
+          { version: "v3" }
+        );
+        for await (const message of stream.messages) {
+          for await (const token of message.text) {
+            process.stdout.write(token);
           }
         }
         ```
@@ -851,18 +862,20 @@ When deleting messages, **make sure** that the resulting message history is vali
 
   const config = { configurable: { thread_id: "1" } };
 
-  for await (const event of await app.stream(
+  const stream1 = await app.streamEvents(
     { messages: [{ role: "user", content: "hi! I'm bob" }] },
-    { ...config, streamMode: "values" }
-  )) {
-    console.log(event.messages.map(message => [message.getType(), message.content]));
+    { ...config, version: "v3" }
+  );
+  for await (const snapshot of stream1.values) {
+    console.log(snapshot.messages.map(message => [message.getType(), message.content]));
   }
 
-  for await (const event of await app.stream(
+  const stream2 = await app.streamEvents(
     { messages: [{ role: "user", content: "what's my name?" }] },
-    { ...config, streamMode: "values" }
-  )) {
-    console.log(event.messages.map(message => [message.getType(), message.content]));
+    { ...config, version: "v3" }
+  );
+  for await (const snapshot of stream2.values) {
+    console.log(snapshot.messages.map(message => [message.getType(), message.content]));
   }
   ```
 

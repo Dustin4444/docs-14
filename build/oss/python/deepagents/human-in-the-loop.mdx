@@ -385,7 +385,7 @@ if __name__ == "__main__":
 
 When run, this produces the following output:
 
-```python
+```text
 Invoking agent - sub-agent will use request_approval tool...
 
 Interrupt received!
@@ -476,7 +476,6 @@ agent = create_deep_agent(
 )
 ```
 
-
 ### Use the same thread ID
 
 When resuming, you must use the same config with the same `thread_id`:
@@ -489,7 +488,6 @@ result = agent.invoke(input, config=config, version="v2")
 # Resume (use same config)
 result = agent.invoke(Command(resume={...}), config=config, version="v2")
 ```
-
 
 ### Match decision order to actions
 
@@ -513,7 +511,6 @@ if result.interrupts:  # [!code highlight]
     )
 ```
 
-
 ### Tailor configurations by risk
 
 Configure different tools based on their risk level:
@@ -529,7 +526,7 @@ interrupt_on = {
 
     # Low risk: no interrupts
     "read_file": False,
-    "list_files": False,
+    "ls": False,
 }
 ```
 

@@ -77,6 +77,7 @@ agent = create_deep_agent(
 | [`interrupt_on=`](#human-in-the-loop) | Pause before tool calls for human approval |
 | [`response_format=`](#structured-output) | Structured output schema |
 | [`state_schema=`](/oss/python/deepagents/context-engineering#custom-state-schema) | Custom graph state schema |
+| [`context_schema=`](/oss/python/deepagents/context-engineering#runtime-context) | Per-run runtime context schema (user IDs, API keys, feature flags) |
 | [profiles](#profiles) | Per-model defaults as a reusable bundle |
 
 <Accordion title="Full function signature">
@@ -113,7 +114,7 @@ Pass a `model` string in `provider:model` format, or an initialized model instan
 
 ## Tools
 
-In addition to [built-in tools](/oss/python/deepagents/overview#core-capabilities) for planning, file management, and subagent spawning, you can provide custom tools:
+In addition to [built-in tools](/oss/python/deepagents/overview#execution-environment) for planning, file management, and subagent spawning, you can provide custom tools:
 
 <CustomizationToolsPy />
 

@@ -384,7 +384,7 @@ main().catch(console.error);
 
 When run, this produces the following output:
 
-```typescript
+```text
 Invoking agent - sub-agent will use request_approval tool...
 
 Interrupt received!
@@ -397,34 +397,6 @@ Resuming with Command(resume={'approved': true})...
 Execution completed!
   Tool result: Approval for "deploying to production" has been granted. You can proceed with the deployment.
 ```
-
-
-
-
-
-## Best practices
-
-### Always use a checkpointer
-
-Human-in-the-loop requires a checkpointer to persist agent state between the interrupt and resume:
-
-
-
-### Use the same thread ID
-
-When resuming, you must use the same config with the same `thread_id`:
-
-
-
-### Match decision order to actions
-
-The decisions list must match the order of `action_requests`:
-
-
-
-### Tailor configurations by risk
-
-Configure different tools based on their risk level:
 
 ---
 

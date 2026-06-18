@@ -161,12 +161,17 @@ Test the calendar agent to see how it handles natural language scheduling:
 ```python
 query = "Schedule a team meeting next Tuesday at 2pm for 1 hour"
 
-for step in calendar_agent.stream(
-    {"messages": [{"role": "user", "content": query}]}
-):
-    for update in step.values():
-        for message in update.get("messages", []):
-            message.pretty_print()
+stream = calendar_agent.stream_events(
+    {"messages": [{"role": "user", "content": query}]},
+    version="v3",
+)
+for kind, item in stream.interleave("messages", "tool_calls"):
+    if kind == "messages":
+        for token in item.text:
+            print(token, end="", flush=True)
+    elif kind == "tool_calls":
+        print(f"\nTool call: {item.tool_name}({item.input})")
+        print(f"Tool result: {item.output}")
 ```
 
 
@@ -229,12 +234,17 @@ Test the email agent with a natural language request:
 ```python
 query = "Send the design team a reminder about reviewing the new mockups"
 
-for step in email_agent.stream(
-    {"messages": [{"role": "user", "content": query}]}
-):
-    for update in step.values():
-        for message in update.get("messages", []):
-            message.pretty_print()
+stream = email_agent.stream_events(
+    {"messages": [{"role": "user", "content": query}]},
+    version="v3",
+)
+for kind, item in stream.interleave("messages", "tool_calls"):
+    if kind == "messages":
+        for token in item.text:
+            print(token, end="", flush=True)
+    elif kind == "tool_calls":
+        print(f"\nTool call: {item.tool_name}({item.input})")
+        print(f"Tool result: {item.output}")
 ```
 
 
@@ -341,12 +351,17 @@ Now test your complete system with complex requests that require coordination ac
 ```python
 query = "Schedule a team standup for tomorrow at 9am"
 
-for step in supervisor_agent.stream(
-    {"messages": [{"role": "user", "content": query}]}
-):
-    for update in step.values():
-        for message in update.get("messages", []):
-            message.pretty_print()
+stream = supervisor_agent.stream_events(
+    {"messages": [{"role": "user", "content": query}]},
+    version="v3",
+)
+for kind, item in stream.interleave("messages", "tool_calls"):
+    if kind == "messages":
+        for token in item.text:
+            print(token, end="", flush=True)
+    elif kind == "tool_calls":
+        print(f"\nTool call: {item.tool_name}({item.input})")
+        print(f"Tool result: {item.output}")
 ```
 
 
@@ -381,12 +396,17 @@ query = (
     "and send them an email reminder about reviewing the new mockups."
 )
 
-for step in supervisor_agent.stream(
-    {"messages": [{"role": "user", "content": query}]}
-):
-    for update in step.values():
-        for message in update.get("messages", []):
-            message.pretty_print()
+stream = supervisor_agent.stream_events(
+    {"messages": [{"role": "user", "content": query}]},
+    version="v3",
+)
+for kind, item in stream.interleave("messages", "tool_calls"):
+    if kind == "messages":
+        for token in item.text:
+            print(token, end="", flush=True)
+    elif kind == "tool_calls":
+        print(f"\nTool call: {item.tool_name}({item.input})")
+        print(f"Tool result: {item.output}")
 ```
 
 
@@ -579,12 +599,17 @@ if __name__ == "__main__":
     print("User Request:", user_request)
     print("\n" + "="*80 + "\n")
 
-    for step in supervisor_agent.stream(
-        {"messages": [{"role": "user", "content": user_request}]}
-    ):
-        for update in step.values():
-            for message in update.get("messages", []):
-                message.pretty_print()
+    stream = supervisor_agent.stream_events(
+        {"messages": [{"role": "user", "content": user_request}]},
+        version="v3",
+    )
+    for kind, item in stream.interleave("messages", "tool_calls"):
+        if kind == "messages":
+            for token in item.text:
+                print(token, end="", flush=True)
+        elif kind == "tool_calls":
+            print(f"\nTool call: {item.tool_name}({item.input})")
+            print(f"Tool result: {item.output}")
 ```
 
 
@@ -658,18 +683,21 @@ query = (
 config = {"configurable": {"thread_id": "6"}}
 
 interrupts = []
-for step in supervisor_agent.stream(
+stream = supervisor_agent.stream_events(
     {"messages": [{"role": "user", "content": query}]},
     config,
-):
-    for update in step.values():
-        if isinstance(update, dict):
-            for message in update.get("messages", []):
-                message.pretty_print()
-        else:
-            interrupt_ = update[0]
-            interrupts.append(interrupt_)
-            print(f"\nINTERRUPTED: {interrupt_.id}")
+    version="v3",
+)
+for kind, item in stream.interleave("messages", "tool_calls"):
+    if kind == "messages":
+        for token in item.text:
+            print(token, end="", flush=True)
+    elif kind == "tool_calls":
+        print(f"\nTool call: {item.tool_name}({item.input})")
+if stream.interrupted:
+    for interrupt_ in stream.interrupts:
+        interrupts.append(interrupt_)
+        print(f"\nINTERRUPTED: {interrupt_.id}")
 ```
 
 
@@ -733,18 +761,21 @@ for interrupt_ in interrupts:
         resume[interrupt_.id] = {"decisions": [{"type": "approve"}]}
 
 interrupts = []
-for step in supervisor_agent.stream(
+stream = supervisor_agent.stream_events(
     Command(resume=resume), # [!code highlight]
     config,
-):
-    for update in step.values():
-        if isinstance(update, dict):
-            for message in update.get("messages", []):
-                message.pretty_print()
-        else:
-            interrupt_ = update[0]
-            interrupts.append(interrupt_)
-            print(f"\nINTERRUPTED: {interrupt_.id}")
+    version="v3",
+)
+for kind, item in stream.interleave("messages", "tool_calls"):
+    if kind == "messages":
+        for token in item.text:
+            print(token, end="", flush=True)
+    elif kind == "tool_calls":
+        print(f"\nTool call: {item.tool_name}({item.input})")
+if stream.interrupted:
+    for interrupt_ in stream.interrupts:
+        interrupts.append(interrupt_)
+        print(f"\nINTERRUPTED: {interrupt_.id}")
 ```
 
 

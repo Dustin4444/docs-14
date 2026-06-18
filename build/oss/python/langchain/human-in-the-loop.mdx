@@ -382,7 +382,7 @@ When multiple actions are under review, provide a decision for each action in th
 
 ## Streaming with human-in-the-loop
 
-You can use `stream()` instead of `invoke()` to get real-time updates while the agent runs and handles interrupts. Use `stream_mode=['updates', 'messages']` with `version="v2"` to stream both agent progress and LLM tokens in the unified v2 format.
+You can stream real-time updates while the agent runs and handles interrupts using `stream_events()`. Use `stream.messages` to stream LLM tokens and `stream.values` to check agent state snapshots for interrupts.
 
 ```python
 from langgraph.types import Command
@@ -390,33 +390,28 @@ from langgraph.types import Command
 config = {"configurable": {"thread_id": "some_id"}}
 
 # Stream agent progress and LLM tokens until interrupt
-for chunk in agent.stream(
+stream = agent.stream_events(
     {"messages": [{"role": "user", "content": "Delete old records from the database"}]},
     config=config,
-    stream_mode=["updates", "messages"],  # [!code highlight]
-    version="v2",  # [!code highlight]
-):
-    if chunk["type"] == "messages":  # [!code highlight]
-        # LLM token
-        token, metadata = chunk["data"]  # [!code highlight]
-        if token.content:
-            print(token.content, end="", flush=True)
-    elif chunk["type"] == "updates":  # [!code highlight]
-        # Check for interrupt
-        if "__interrupt__" in chunk["data"]:  # [!code highlight]
-            print(f"\n\nInterrupt: {chunk['data']['__interrupt__']}")
+    version="v3",  # [!code highlight]
+)
+for message in stream.messages:  # [!code highlight]
+    for token in message.text:  # [!code highlight]
+        print(token, end="", flush=True)
+
+# Check whether the run paused for human input
+if stream.interrupted:  # [!code highlight]
+    print(f"\n\nInterrupt: {stream.interrupts}")  # [!code highlight]
 
 # Resume with streaming after human decision
-for chunk in agent.stream(
+stream = agent.stream_events(
     Command(resume={"decisions": [{"type": "approve"}]}),
     config=config,
-    stream_mode=["updates", "messages"],
-    version="v2",  # [!code highlight]
-):
-    if chunk["type"] == "messages":  # [!code highlight]
-        token, metadata = chunk["data"]  # [!code highlight]
-        if token.content:
-            print(token.content, end="", flush=True)
+    version="v3",  # [!code highlight]
+)
+for message in stream.messages:  # [!code highlight]
+    for token in message.text:
+        print(token, end="", flush=True)
 ```
 
 

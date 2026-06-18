@@ -16,6 +16,7 @@ providers, lifecycle scoping, seeding files, secrets, deployment, and production
 `useStream` configuration, see [Going to production](/oss/javascript/deepagents/going-to-production).
 
 import { PatternEmbed } from "/snippets/pattern-embed.jsx";
+import FrontendSandboxThreadBackendPy from "/snippets/code-samples/frontend-sandbox-thread-backend-py.mdx";
 
 <PatternEmbed pattern="deep-agent-ide" minHeight={700} />
 
@@ -324,8 +325,7 @@ chat panel. It uses [`useStream`](https://reference.langchain.com/javascript/lan
 endpoints for file browsing.
 
 For production deployment, point `apiUrl` at your
-[LangSmith Deployment](/langsmith/deployment), enable
-`reconnectOnMount` and `fetchStateHistory`, and pass a stable
+[LangSmith Deployment](/langsmith/deployment), and pass a stable
 `thread_id` on each run. See
 [Frontend](/oss/javascript/deepagents/going-to-production#frontend) in
 [Going to production](/oss/javascript/deepagents/going-to-production) for those settings

@@ -1618,8 +1618,10 @@ display(Image(graph.get_graph().draw_mermaid_png()))
 
 ```python
 # Call the graph: here we call it to generate a list of jokes
-for step in graph.stream({"topic": "animals"}):
-    print(step)
+stream = graph.stream_events({"topic": "animals"}, version="v3")
+for message in stream.messages:
+    for token in message.text:
+        print(token, end="", flush=True)
 ```
 
 ```

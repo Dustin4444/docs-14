@@ -271,26 +271,29 @@ agent = create_agent(
 
 config: RunnableConfig = {"configurable": {"thread_id": "1"}}
 
-for event in agent.stream(
+stream = agent.stream_events(
     {"messages": [{"role": "user", "content": "hi! I'm bob"}]},
     config,
-    stream_mode="values",
-):
-    print([(message.type, message.content) for message in event["messages"]])
+    version="v3",
+)
+for snapshot in stream.values:
+    print([(message.type, message.content) for message in snapshot["messages"]])
 
-for event in agent.stream(
+stream = agent.stream_events(
     {"messages": [{"role": "user", "content": "write a short poem about cats"}]},
     config,
-    stream_mode="values",
-):
-    print([(message.type, message.content) for message in event["messages"]])
+    version="v3",
+)
+for snapshot in stream.values:
+    print([(message.type, message.content) for message in snapshot["messages"]])
 
-for event in agent.stream(
+stream = agent.stream_events(
     {"messages": [{"role": "user", "content": "what's my name?"}]},
     config,
-    stream_mode="values",
-):
-    print([(message.type, message.content) for message in event["messages"]])
+    version="v3",
+)
+for snapshot in stream.values:
+    print([(message.type, message.content) for message in snapshot["messages"]])
 ```
 
 ```

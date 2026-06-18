@@ -237,7 +237,7 @@ The agent stage processes text transcripts through a LangChain [agent](/oss/pyth
 
 ### Key concepts
 
-**Streaming Responses**: The agent uses [`stream_mode="messages"`](/oss/python/langchain/streaming#llm-tokens) to emit response tokens as they're generated, rather than waiting for the complete response. This enables the TTS stage to begin synthesis immediately.
+**Streaming Responses**: The agent uses [`stream_events(version="v3")`](/oss/python/langchain/streaming) with `stream.messages` to emit response tokens as they are generated, rather than waiting for the complete response. This enables the TTS stage to begin synthesis immediately.
 
 **Conversation Memory**: A [checkpointer](/oss/python/langchain/short-term-memory) maintains conversation state across turns using a unique thread ID. This allows the agent to reference previous exchanges in the conversation.
 
@@ -288,16 +288,16 @@ async def agent_stream(
         # Process final transcripts through the agent
         if event.type == "stt_output":
             # Stream agent response with conversation context
-            stream = agent.astream(
+            stream = await agent.astream_events(
                 {"messages": [HumanMessage(content=event.transcript)]},
                 {"configurable": {"thread_id": thread_id}},
-                stream_mode="messages",
+                version="v3",
             )
 
             # Yield agent response chunks as they arrive
-            async for message, _ in stream:
-                if message.text:
-                    yield AgentChunkEvent.create(message.text)
+            async for message in stream.messages:
+                async for token in message.text:
+                    yield AgentChunkEvent.create(token)
 ```
 
 

@@ -8,6 +8,9 @@ tag: "Beta"
 
 **Provider profiles** are a narrower companion API for *model-construction* kwargs, which don't affect the harness. Most callers don't need them; reach for one when you want `init_chat_model` defaults, credential checks, or runtime-derived kwargs as defaults with your provider choice (for example, when packaging a provider integration).
 
+
+
+
 ## Harness profiles
 
 A `HarnessProfile` describes prompt-assembly, tool-visibility, middleware, and default-subagent adjustments that `create_deep_agent` applies after the chat model has been constructed:
@@ -29,6 +32,9 @@ register_harness_profile(
     ),
 )
 ```
+
+
+
 
 <ResponseField name="base_system_prompt" type="string">
     Replace the base Deep Agents system prompt (`CUSTOM` in [Prompt assembly](/oss/python/deepagents/customization#prompt-assembly)).
@@ -58,9 +64,15 @@ register_harness_profile(
     Disable, rename, or re-prompt the general-purpose subagent. When this field's `system_prompt` is set alongside `base_system_prompt`, the general-purpose-specific subagent prompt wins—see [General-purpose subagent prompt](/oss/python/deepagents/customization#general-purpose-subagent-prompt).
 </ResponseField>
 
+
+
+
 <Note>
     Caller-supplied `system_prompt=` always sits at the front of the assembled prompt, and `system_prompt_suffix` always sits at the end—regardless of which model is selected. The same overlay rules apply to subagents: each subagent re-runs profile resolution against its own model. See [Prompt assembly](/oss/python/deepagents/customization#prompt-assembly) for the full per-case breakdown (main agent, subagents, and the general-purpose subagent).
 </Note>
+
+
+
 
 <Warning>
     To run an agent without the `task` tool, see [Running without subagents](/oss/python/deepagents/subagents#running-without-subagents) — set `general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False)` and pass no synchronous subagents via `subagents=`. `SubAgentMiddleware` (and the `task` tool) is only attached when at least one synchronous subagent exists, so this configuration leaves it out cleanly. Async subagents are unaffected.
@@ -72,6 +84,9 @@ Entries in `excluded_middleware` accept two forms:
 
 - A middleware *class* (matched by exact type), or a plain string that matches `AgentMiddleware.name`. Use plain strings for built-ins and public aliases such as `"SummarizationMiddleware"`.
 - An `module:Class` import ref (for example, `"my_pkg.middleware:TelemetryMiddleware"`) to target an exact middleware class from a config file. Import refs resolve lazily, so use them only for trusted local configuration — loading one imports Python code.
+
+
+
 
 <Accordion
     title="Lookup order for preconfigured model instances"
@@ -99,6 +114,9 @@ Re-registering under an existing key merges the new profile on top of the prior 
     There is no wildcard key that matches every provider. To apply the same overrides everywhere—say, dropping `TodoListMiddleware` regardless of which model is selected—register the profile under each provider key you use. Profiles are intended for adjustments that depend on the model being selected. Global adjustments that should apply regardless of model should be made on the `create_deep_agent` call site.
 </Note>
 
+
+
+
 ## Merge semantics
 
 | Field | Merge behavior |
@@ -106,11 +124,16 @@ Re-registering under an existing key merges the new profile on top of the prior 
 | `base_system_prompt`, `system_prompt_suffix` | New value wins when set; otherwise inherits |
 | `tool_description_overrides` | Mappings merge per key; new value wins on a shared key |
 | `excluded_tools`, `excluded_middleware` | Set union |
-| `extra_middleware` | Merged by concrete class: new instance replaces existing at its position, novel classes append |
+| `extra_middleware` | Merged by name: new instance replaces existing at its position, novel entries append |
 | `general_purpose_subagent` | Merged field-wise (unset fields inherit) |
+
+
+
+
 | `init_kwargs` (provider) | Dicts merge key-wise; new value wins on a shared key |
 | `pre_init` (provider) | Callables chain: existing runs first, then the new one |
 | `init_kwargs_factory` (provider) | Factories chain with their outputs merged every `resolve_model` call |
+
 
 ## Provider profiles
 
@@ -137,11 +160,17 @@ register_provider_profile(
     Kwargs derived from runtime state (for example, headers pulled from environment variables).
 </ResponseField>
 
+
+
+
 ## Load profiles from config files
 
 For YAML/JSON-backed workflows, use `HarnessProfileConfig`. It mirrors the declarative subset of `HarnessProfile` (prompt text, tool-description overrides, excluded tools and middleware, general-purpose subagent edits) and owns `to_dict` / `from_dict`. Runtime-only state — middleware instances, factories, and class-form `excluded_middleware` entries — stays on `HarnessProfile`.
 
 `register_harness_profile` accepts either type, so config-backed callers don't need a manual conversion step:
+
+
+
 
 ```yaml
 # openai.yaml
@@ -156,6 +185,9 @@ excluded_middleware:
 general_purpose_subagent:
   enabled: false
 ```
+
+
+
 
 ```python
 import yaml
@@ -172,6 +204,9 @@ To go the other direction, `HarnessProfileConfig.from_harness_profile(...)` expo
 
 - Class-form `excluded_middleware` entries serialize as a public alias (when the class exposes one via `serialized_name: ClassVar[str]`) or as a `module:Class` import ref.
 - Non-empty `extra_middleware` and middleware classes declared in `__main__` or inside a function scope cannot be serialized — export raises `ValueError`.
+
+
+
 
 ## Ship a profile as a plugin
 
@@ -211,6 +246,9 @@ def register_provider() -> None:
         ProviderProfile(init_kwargs={"temperature": 0}),
     )
 ```
+
+
+
 
 ## Related
 

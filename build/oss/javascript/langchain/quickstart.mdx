@@ -282,7 +282,7 @@ Start by creating a simple agent that can answer questions and call tools. The a
     );
 
     const agent = createAgent({
-      model: "baseten:zai-org/GLM-5",
+      model: "baseten:zai-org/GLM-5.2",
       tools: [getWeather],
     });
 
@@ -560,7 +560,7 @@ Along the way you will explore the following concepts:
             ```ts Baseten
             import { initChatModel } from "langchain";
 
-            const model = await initChatModel("baseten:zai-org/GLM-5", {
+            const model = await initChatModel("baseten:zai-org/GLM-5.2", {
               temperature: 0.5,
               timeout: 300,
               maxTokens: 25000,

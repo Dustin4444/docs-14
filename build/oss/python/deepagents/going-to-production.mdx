@@ -381,7 +381,7 @@ The examples below use an async [graph factory](/langsmith/graph-rebuild) instea
 
 <Tabs>
   <Tab title="Thread-scoped (most common)">
-    Each conversation gets its own sandbox. The [graph factory](/langsmith/graph-rebuild) reads `thread_id` from the run config, so each [thread](/langsmith/use-threads) automatically gets its own isolated environment. The provider's label-based lookup handles deduplication across runs. Cleaned up when the sandbox [TTL](/langsmith/configure-ttl) expires.
+    Each conversation gets its own sandbox. The [graph factory](/langsmith/graph-rebuild) reads `thread_id` from the run config, so each [thread](/langsmith/use-threads) automatically gets its own isolated environment. Named sandbox lookup handles deduplication across runs. Cleaned up when the sandbox [TTL](/langsmith/configure-ttl) expires.
 
 <SandboxLifecycleFactoryThreadPy />
 
@@ -403,7 +403,7 @@ The examples below use an async [graph factory](/langsmith/graph-rebuild) instea
   </Tab>
 </Tabs>
 
-Because the `agent` variable is an async function (not a compiled graph), the server treats it as a [graph factory](/langsmith/graph-rebuild) and calls it on each run, injecting the config. The factory looks up or creates the sandbox via the provider's label-based search and returns a fresh agent graph wired to that sandbox.
+Because the `agent` variable is an async function (not a compiled graph), the server treats it as a [graph factory](/langsmith/graph-rebuild) and calls it on each run, injecting the config. The factory looks up or creates the sandbox by name and returns a fresh agent graph wired to that sandbox.
 
 Once deployed with `langgraph deploy`, invoke the agent from your application code using the SDK. The client-side code is the same regardless of scope. The scoping is handled entirely in the agent factory above, but the behavior differs:
 
@@ -499,8 +499,11 @@ For provider-specific file transfer examples, see [working with files](/oss/pyth
 
 ```python agent.py
 from deepagents import create_deep_agent
+from deepagents.backends import CompositeBackend, StoreBackend
+from deepagents.backends.langsmith import LangSmithSandbox
 from langchain.agents.middleware import AgentMiddleware, AgentState
 from langgraph.runtime import Runtime
+from langsmith.sandbox import SandboxClient
 
 
 def _safe_filename(key: str) -> str:
@@ -549,8 +552,12 @@ class SandboxSyncMiddleware(AgentMiddleware):
                 )
 
 
+client = SandboxClient()
+ls_sandbox = client.create_sandbox()
+
+
 backend = CompositeBackend(
-    default=DaytonaSandbox(sandbox=sandbox),
+    default=LangSmithSandbox(sandbox=ls_sandbox),
     routes={
         "/skills/": StoreBackend(
             rt,

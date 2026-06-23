@@ -94,7 +94,7 @@ For the full lifecycle table, async [graph factory](/langsmith/graph-rebuild) no
 
 ### Thread-scoped (default)
 
-Each conversation gets its own sandbox. The first run creates it; follow-up turns on the same thread reuse it. When the thread ends or the sandbox TTL expires, the environment goes away. Store the mapping with provider labels or metadata as in the following example so each run resolves to the same sandbox.
+Each conversation gets its own sandbox. The first run creates it; follow-up turns on the same thread reuse it. When the thread ends or the sandbox TTL expires, the environment goes away. Store the mapping with sandbox names or metadata as in the following example so each run resolves to the same sandbox.
 
 <Tip>
 When users can return after idle time, configure a TTL on the sandbox so the provider deletes or archives idle environments automatically.
@@ -183,17 +183,18 @@ Trade-offs:
 - 🔴 Network latency on each execution call.
 
 ```python Example
-from daytona import Daytona
 from deepagents import create_deep_agent
+from deepagents.backends.langsmith import LangSmithSandbox
 from dotenv import load_dotenv
-from langchain_daytona import DaytonaSandbox
+from langsmith.sandbox import SandboxClient
 
 
 load_dotenv()
 
-# Can also do this with AgentCore, E2B, Modal, Runloop
-sandbox = Daytona().create()
-backend = DaytonaSandbox(sandbox=sandbox)
+# Can also do this with AgentCore, Daytona, E2B, Modal, Runloop, or Vercel
+client = SandboxClient()
+ls_sandbox = client.create_sandbox()
+backend = LangSmithSandbox(sandbox=ls_sandbox)
 
 agent = create_deep_agent(
     model="google_genai:gemini-3.5-flash",
@@ -213,10 +214,8 @@ try:
         }
     )
     print(result["messages"][-1].content)
-except Exception:
-    # Optional: delete the sandbox proactively on an exception
-    sandbox.stop()
-    raise
+finally:
+    client.delete_sandbox(ls_sandbox.name)
 ```
 
 

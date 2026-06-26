@@ -508,6 +508,15 @@ By default, subagents use the **inherited checkpointer** mode—each invocation 
 
 Because subagents are called inside tool functions, LangGraph cannot [statically discover](/oss/python/langgraph/use-subgraphs#view-subgraph-state) them. This means [`get_state` with `subgraphs`](/oss/python/langgraph/use-subgraphs#view-subgraph-state) will not return subagent state. If you need to read nested graph state (e.g., during an [interrupt](/oss/python/langgraph/interrupts#pause-using-interrupt)), invoke the subagent from a [node function](/oss/python/langgraph/use-subgraphs#call-a-subgraph-inside-a-node) in a custom graph instead. See [subgraph persistence](/oss/python/langgraph/use-subgraphs#subgraph-persistence) for details on how each mode affects state visibility.
 
+<Card
+    title="Migrate from langgraph-supervisor"
+    icon="arrow-right"
+    href="/oss/python/migrate/langgraph-supervisor"
+    arrow cta="View guide"
+>
+    The langgraph-supervisor package is no longer actively maintained. Learn how to migrate from create_supervisor to the subagents pattern, including interrupt and resume flows with external API callbacks.
+</Card>
+
 ---
 
 <div className="source-links">

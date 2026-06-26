@@ -2,6 +2,9 @@
 title: Model Context Protocol (MCP)
 ---
 
+import McpMultimodalToolContentPy from '/snippets/code-samples/mcp-multimodal-tool-content-py.mdx';
+import McpMultimodalToolContentJs from '/snippets/code-samples/mcp-multimodal-tool-content-js.mdx';
+
 
 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that standardizes how applications provide tools and context to LLMs. LangChain agents can use tools defined on MCP servers using the [`@langchain/mcp-adapters`](https://github.com/langchain-ai/langchainjs/tree/main/libs/langchain-mcp-adapters) library.
 
@@ -350,6 +353,18 @@ const agent = createAgent({ model: "claude-sonnet-4-6", tools });
 ```
 
 When an MCP tool execution fails (`CallToolResult` with `isError: true`), `@langchain/mcp-adapters` raises a `ToolException`. Wrap tool calls in a try/catch to handle these errors. Unlike the Python adapter, the TypeScript adapter does not return the error to the model as a failed tool message.
+
+
+
+
+#### Multimodal tool content
+
+MCP tools can return [multimodal content](https://modelcontextprotocol.io/specification/2025-03-26/server/tools#tool-result) (images, text, etc.) in their responses. When an MCP server returns content with multiple parts (e.g., text and images), the adapter converts them to LangChain's [standard content blocks](/oss/javascript/langchain/messages#standard-content-blocks). You can access the standardized representation via the `contentBlocks` property on the `ToolMessage`:
+
+<McpMultimodalToolContentJs />
+
+This allows you to handle multimodal tool responses in a provider-agnostic way, regardless of how the underlying MCP server formats its content.
+
 
 
 

@@ -1552,6 +1552,7 @@
                         "pages": [
                           "langsmith/set-up-custom-auth",
                           "langsmith/resource-auth",
+                          "langsmith/store-auth",
                           "langsmith/add-auth-server"
                         ]
                       },

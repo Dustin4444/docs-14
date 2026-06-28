@@ -225,7 +225,7 @@
                             "root": "oss/python/deepagents/interpreters",
                             "expanded": true,
                             "pages": [
-                              "oss/python/deepagents/programmatic-subagents"
+                              "oss/python/deepagents/dynamic-subagents"
                             ]
                           },
                           "oss/python/deepagents/profiles",
@@ -696,7 +696,7 @@
                             "root": "oss/javascript/deepagents/interpreters",
                             "expanded": true,
                             "pages": [
-                              "oss/javascript/deepagents/programmatic-subagents"
+                              "oss/javascript/deepagents/dynamic-subagents"
                             ]
                           },
                           "oss/javascript/deepagents/profiles",
@@ -2315,6 +2315,14 @@
     {
       "source": "/oss/deepagents/harness",
       "destination": "/oss/deepagents/overview"
+    },
+    {
+      "source": "/oss/python/deepagents/programmatic-subagents",
+      "destination": "/oss/python/deepagents/dynamic-subagents"
+    },
+    {
+      "source": "/oss/javascript/deepagents/programmatic-subagents",
+      "destination": "/oss/javascript/deepagents/dynamic-subagents"
     },
     {
       "source": "/oss/python/deepagents/harness",

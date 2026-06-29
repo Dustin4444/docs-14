@@ -57,6 +57,39 @@ When using the [Agent Server](/langsmith/agent-server), you do not need to imple
 | Access pattern | Pass a `thread_id` in graph config | Read and write items from nodes or application code |
 | Full guide | [Checkpointers](/oss/javascript/langgraph/checkpointers) | [Stores](/oss/javascript/langgraph/stores) |
 
+## Troubleshooting common issues
+
+### PostgresSaver: `thread_id` too long
+
+When using `PostgresSaver` (or `AsyncPostgresSaver`), the `thread_id` is stored in a column with limited length. If your `thread_id` exceeds the column size, you will see a database error.
+
+**Fix:** Keep `thread_id` values under 255 characters. Use a UUID or hash if you need deterministic IDs:
+
+
+
+### `MemorySaver` does not persist between restarts
+
+`MemorySaver` and `InMemorySaver` store checkpoints in RAM. When the process restarts, all checkpoints are lost.
+
+**Fix:** Use a persistent checkpointer for production:
+
+- `PostgresSaver`: PostgreSQL with async support
+- `SqliteSaver`: Local file-based storage for development
+
+### Checkpoints growing unboundedly
+
+Over long conversations, checkpoints accumulate. This can increase latency and storage costs.
+
+**Fix:** Prune old checkpoints periodically or set a retention policy:
+
+
+
+### State access from parent graph to subgraph
+
+When a subgraph updates state, the parent graph may not see the changes immediately. This is because each subgraph manages its own checkpoint namespace.
+
+**Fix:** Use [shared state via Store](/oss/javascript/langgraph/stores) for data that needs to cross graph boundaries, or configure your subgraph to write to the parent checkpoint.
+
 ## Next steps
 
 - [Use checkpointers](/oss/javascript/langgraph/checkpointers) to persist and inspect thread state.
